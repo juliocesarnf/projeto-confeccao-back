@@ -1,0 +1,11 @@
+import { Router } from 'express';
+import { MaterialController } from '../modules/materials/material.controller.js';
+
+const MaterialRouter = Router();
+const controller = new MaterialController();
+
+MaterialRouter.get('/variacoes', controller.getVariations.bind(controller));
+MaterialRouter.post('/variacoes/remover-estoque', controller.removeStockVariations.bind(controller));
+
+
+export default MaterialRouter;
