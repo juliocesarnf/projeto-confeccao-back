@@ -10,4 +10,6 @@ OrderRouter.get('/:id', controller.get.bind(controller));
 
 OrderRouter.get('/:id/items', controller.getItems.bind(controller));
 
+OrderRouter.patch('/:id/confirmar', controller.confirmOrder.bind(controller));
+
 export default OrderRouter;

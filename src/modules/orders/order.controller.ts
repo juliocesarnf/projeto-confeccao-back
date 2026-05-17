@@ -33,4 +33,20 @@ export class OrderController {
 
     return res.json(items);
   }
+
+  async confirmOrder(req: Request, res: Response) {
+    const pedidoId = Number(req.params.id);
+
+    if (!Number.isInteger(pedidoId) || pedidoId <= 0) {
+      return res.status(400).json({ error: "id do pedido invalido" });
+    }
+
+    const order = await service.confirmOrder(pedidoId);
+
+    if (!order) {
+      return res.status(404).json({ error: "Pedido nao encontrado" });
+    }
+
+    return res.json(order);
+  }
 }

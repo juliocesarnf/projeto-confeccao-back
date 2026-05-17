@@ -9,52 +9,52 @@ export class ProductRepositoryPg implements ProductRepositoryInterface {
       `
       SELECT 
         pm.id,
-        pm.quantidade,
+        pm.quantity,
 
-        vp.id AS variacao_produto_id,
-        vp.produto_id,
+        pv.id AS "productVariationId",
+        pv.product_id AS "productId",
 
-        mv.id AS material_variacao_id,
-        mv.variacao,
-        mv.estoque,
+        mv.id AS "materialVariationId",
+        mv.variation,
+        mv.stock,
 
-        m.id AS material_id,
-        m.nome AS material_nome,
-        m.unidade_base
+        m.id AS "materialId",
+        m.name AS "materialName",
+        m.base_unit AS "baseUnit"
 
-      FROM produto_material pm
+      FROM product_material pm
 
-      INNER JOIN variacao_produto vp
-        ON vp.id = pm.variacao_produto_id
+      INNER JOIN product_variation pv
+        ON pv.id = pm.product_variation_id
 
-      INNER JOIN material_variacao mv 
-        ON mv.id = pm.material_variacao_id
+      INNER JOIN material_variation mv 
+        ON mv.id = pm.material_variation_id
 
       INNER JOIN material m 
         ON m.id = mv.material_id
 
-      WHERE pm.variacao_produto_id = $1
+      WHERE pm.product_variation_id = $1
       `,
       [id]
     );
 
     return result.rows.map(row => ({
       id: row.id,
-      quantidade: row.quantidade,
+      quantity: row.quantity,
 
-      variacao_produto_id: row.variacao_produto_id,
-      produto_id: row.produto_id,
+      productVariationId: row.productVariationId,
+      productId: row.productId,
 
-      material_variacao: {
-        id: row.material_variacao_id,
-        variacao: row.variacao,
-        estoque: row.estoque,
+      materialVariation: {
+        id: row.materialVariationId,
+        variation: row.variation,
+        stock: row.stock,
       },
 
       material: {
-        id: row.material_id,
-        nome: row.material_nome,
-        unidade_base: row.unidade_base,
+        id: row.materialId,
+        name: row.materialName,
+        baseUnit: row.baseUnit,
       }
     }));
   }
@@ -63,63 +63,63 @@ export class ProductRepositoryPg implements ProductRepositoryInterface {
     return [];
   }
 
-  async getMaterialsByVariationIds(ids: number[]): Promise<any[]> {
+  async getMaterialsByVariationIdList(ids: number[]): Promise<any[]> {
     const result = await db.query(
       `
       SELECT 
         pm.id,
-        pm.quantidade,
+        pm.quantity,
 
-        vp.id AS variacao_produto_id,
-        vp.produto_id,
+        pv.id AS "productVariationId",
+        pv.product_id AS "productId",
 
-        mv.id AS material_variacao_id,
-        mv.variacao,
-        mv.estoque,
+        mv.id AS "materialVariationId",
+        mv.variation,
+        mv.stock,
 
-        m.id AS material_id,
-        m.nome AS material_nome,
-        m.unidade_base
+        m.id AS "materialId",
+        m.name AS "materialName",
+        m.base_unit AS "baseUnit"
 
-      FROM produto_material pm
+      FROM product_material pm
 
-      INNER JOIN variacao_produto vp
-        ON vp.id = pm.variacao_produto_id
+      INNER JOIN product_variation pv
+        ON pv.id = pm.product_variation_id
 
-      INNER JOIN material_variacao mv 
-        ON mv.id = pm.material_variacao_id
+      INNER JOIN material_variation mv 
+        ON mv.id = pm.material_variation_id
 
       INNER JOIN material m 
         ON m.id = mv.material_id
 
-      WHERE pm.variacao_produto_id = ANY($1)
+      WHERE pm.product_variation_id = ANY($1)
       `,
-      [ids] // 👈 aqui vai o array direto
+      [ids]
     );
 
     return result.rows.map(row => ({
       id: row.id,
-      quantidade: row.quantidade,
+      quantity: row.quantity,
 
-      variacao_produto_id: row.variacao_produto_id,
-      produto_id: row.produto_id,
+      productVariationId: row.productVariationId,
+      productId: row.productId,
 
-      material_variacao: {
-        id: row.material_variacao_id,
-        variacao: row.variacao,
-        estoque: row.estoque,
+      materialVariation: {
+        id: row.materialVariationId,
+        variation: row.variation,
+        stock: row.stock,
       },
 
       material: {
-        id: row.material_id,
-        nome: row.material_nome,
-        unidade_base: row.unidade_base,
+        id: row.materialId,
+        name: row.materialName,
+        baseUnit: row.baseUnit,
       }
     }));
   }
 
   async getProcessesByProductIdList(products: ProductToDo[]): Promise<any[]> {
-    const productIds = products.map(product => product.id_Produto);
+    const productIds = products.map(product => product.productId);
 
     if (productIds.length === 0) {
       return products.map(product => ({
@@ -132,40 +132,47 @@ export class ProductRepositoryPg implements ProductRepositoryInterface {
       `
       SELECT
         pp.id,
-        pp.produto_id,
-        pp.processo_id,
-        pp.ordem,
-        pp.tempo_estimado,
-        pr.nome AS processo_nome
-      FROM produto_processo pp
-      INNER JOIN processo pr
-        ON pr.id = pp.processo_id
-      WHERE pp.produto_id = ANY($1)
-      ORDER BY pp.produto_id, pp.ordem
+        pp.product_id AS "productId",
+        pp.process_id AS "processId",
+        pp.step_order AS "stepOrder",
+        pp.estimated_time AS "estimatedTime",
+        pr.name AS "processName"
+
+      FROM product_process pp
+
+      INNER JOIN process pr
+        ON pr.id = pp.process_id
+
+      WHERE pp.product_id = ANY($1)
+
+      ORDER BY pp.product_id, pp.step_order
       `,
       [productIds]
     );
 
     const processesByProductId = result.rows.reduce((acc, row) => {
-      const produtoId = row.produto_id;
-      if (!acc[produtoId]) {
-        acc[produtoId] = [];
+      const productId = row.productId;
+
+      if (!acc[productId]) {
+        acc[productId] = [];
       }
-      acc[produtoId].push({
+
+      acc[productId].push({
         id: row.id,
-        produto_id: row.produto_id,
-        processo_id: row.processo_id,
-        ordem: row.ordem,
-        tempo_estimado: row.tempo_estimado,
-        processo_nome: row.processo_nome,
+        productId: row.productId,
+        processId: row.processId,
+        stepOrder: row.stepOrder,
+        estimatedTime: row.estimatedTime,
+        name: row.processName,
       });
+
       return acc;
     }, {} as Record<number, any[]>);
 
     return products.map(product => ({
       ...product,
-      processos: processesByProductId[product.id_Produto] ?? [],
+      processes: processesByProductId[product.productId] ?? [],
     }));
-  } 
+  }
 
 }

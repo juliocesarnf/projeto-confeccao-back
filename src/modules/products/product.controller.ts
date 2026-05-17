@@ -8,7 +8,7 @@ const service = new ProductService(repositorPg);
 
 export class ProductController {
   async get(req: Request, res: Response) {
-    let data = await service.findAllVariations();
+    let data = await service.getAllVariations();
     return res.json(data);
   }
 
@@ -35,7 +35,7 @@ export class ProductController {
   }
 
   async getProcessesByProductIdList(req: Request, res: Response) {
-    const products: ProductToDo[] = req.body;
+    const { products } = req.body as { products: ProductToDo[] };
     const processes = await service.getProcessesByProductIdList(products);
     return res.json(processes);
   }
@@ -43,7 +43,13 @@ export class ProductController {
 }
 
 export type ProductToDo = {
-  id_Produto: number;
-  nome: string;
-  quantidade: number;
-}
+  productId: number;
+  name: string;
+  quantity: number;
+  processes?: ProductProcess[];
+};
+
+export type ProductProcess = {
+  id: number;
+  name: string;
+};

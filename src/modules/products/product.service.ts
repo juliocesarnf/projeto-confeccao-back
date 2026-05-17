@@ -4,7 +4,7 @@ import type { ProductRepositoryInterface } from "./product.repository.interface.
 export class ProductService {
   constructor(private readonly repository: ProductRepositoryInterface) {}
 
-  async findAllVariations() {
+  async getAllVariations() {
     return this.repository.getAllVariations()
   }
 
@@ -13,7 +13,7 @@ export class ProductService {
   }
 
   async getMaterialsByVariationIds(ids: number[]) {
-    return this.repository.getMaterialsByVariationIds(ids);
+    return this.repository.getMaterialsByVariationIdList(ids);
   }
 
   async getProcessesByProductIdList(products: ProductToDo[]) {

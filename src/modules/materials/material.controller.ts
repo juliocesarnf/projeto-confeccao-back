@@ -7,7 +7,7 @@ const service = new MaterialService(repositorPg);
 
 export class MaterialController {
   async getVariations(req: Request, res: Response) {
-    let data = await service.findAllVariations();
+    let data = await service.getAllVariations();
     return res.json(data);
   }
 

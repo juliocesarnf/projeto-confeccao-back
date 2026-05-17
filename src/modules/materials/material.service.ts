@@ -1,23 +1,23 @@
 import type { MaterialRepositoryInterface } from "./material.repository.interface.js";
 
 export type MaterialVariationInfo = {
-  variacao_id: number;
+  variation_id: number;
   material: string;
-  variacao: string;
-  quantidade: number;
-  unidade_base: string;
+  variation: string;
+  quantity: number;
+  base_unit: string;
 };
 
 export class MaterialService {
   constructor(private readonly repository: MaterialRepositoryInterface) {}
 
-  async findAllVariations() {
-    return this.repository.findAllVariations();
+  async getAllVariations() {
+    return this.repository.getAllVariations();
   }
 
   async removeStockVariations(variations: MaterialVariationInfo[]) {
     for (const item of variations) {
-      await this.repository.decrementStockByVariationId(item.variacao_id, item.quantidade);
+      await this.repository.decrementStockByVariationId(item.variation_id, item.quantity);
     }
   }
 }

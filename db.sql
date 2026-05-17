@@ -1,86 +1,99 @@
 -- =========================
--- CLIENTE
+-- CUSTOMER
 -- =========================
-CREATE TABLE cliente (
+CREATE TABLE customer (
   id SERIAL PRIMARY KEY,
-  nome VARCHAR(255) NOT NULL,
-  telefone VARCHAR(50),
+  name VARCHAR(255) NOT NULL,
+  phone VARCHAR(50),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- =========================
--- FORNECEDOR
+-- SUPPLIER
 -- =========================
-CREATE TABLE fornecedor (
+CREATE TABLE supplier (
   id SERIAL PRIMARY KEY,
-  nome VARCHAR(255) NOT NULL,
+  name VARCHAR(255) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- =========================
--- PRODUTO
+-- PRODUCT
 -- =========================
-CREATE TABLE produto (
+CREATE TABLE product (
   id SERIAL PRIMARY KEY,
-  nome VARCHAR(255) NOT NULL,
-  descricao TEXT,
-  categoria VARCHAR(100),
-  ativo BOOLEAN DEFAULT TRUE
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  category VARCHAR(100),
+  active BOOLEAN DEFAULT TRUE
 );
 
 -- =========================
--- VARIACAO PRODUTO
+-- PRODUCT VARIATION
 -- =========================
-CREATE TABLE variacao_produto (
+CREATE TABLE product_variation (
   id SERIAL PRIMARY KEY,
-  produto_id INT NOT NULL,
+  product_id INT NOT NULL,
   sku VARCHAR(100),
-  tamanho VARCHAR(50),
-  cor VARCHAR(50),
-  estoque NUMERIC(10,2) DEFAULT 0,
-  estoque_minimo NUMERIC(10,2) DEFAULT 0,
-  valor_base NUMERIC(10,2),
-  ativo BOOLEAN DEFAULT TRUE,
+  size VARCHAR(50),
+  color VARCHAR(50),
+  stock NUMERIC(10,2) DEFAULT 0,
+  minimum_stock NUMERIC(10,2) DEFAULT 0,
+  base_price NUMERIC(10,2),
+  active BOOLEAN DEFAULT TRUE,
 
-  CONSTRAINT fk_variacao_produto
-    FOREIGN KEY (produto_id) REFERENCES produto(id)
+  FOREIGN KEY (product_id) REFERENCES product(id)
 );
 
 -- =========================
--- PEDIDO
+-- PRODUCT SUPPLIERS
 -- =========================
-CREATE TABLE pedido (
-  id SERIAL PRIMARY KEY,
-  cliente_id INT NOT NULL,
-  data TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  status VARCHAR(50) CHECK (status IN ('novo','confirmado','em_producao','finalizado','cancelado')),
-  valor_total NUMERIC(10,2),
-  prazo DATE,
-
-  CONSTRAINT fk_pedido_cliente
-    FOREIGN KEY (cliente_id) REFERENCES cliente(id)
+CREATE TABLE product_supplier (
+  id           SERIAL        PRIMARY KEY,
+  product_id   INT           NOT NULL REFERENCES product(id)   ON DELETE CASCADE,
+  supplier_id  INT           NOT NULL REFERENCES supplier(id)  ON DELETE CASCADE,
+  price        NUMERIC(10,2) NOT NULL CHECK (price >= 0),
+  created_at   TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at   TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (product_id, supplier_id)
 );
 
 -- =========================
--- ITEM PEDIDO
+-- ORDER
 -- =========================
-CREATE TABLE item_pedido (
+CREATE TABLE customer_order (
   id SERIAL PRIMARY KEY,
-  pedido_id INT NOT NULL,
-  variacao_produto_id INT NOT NULL,
+  customer_id INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  status VARCHAR(50) CHECK (
+    status IN ('novo','producao','confirmado','finalizado','cancelado')
+  ),
+  total_value NUMERIC(10,2),
+  due_date DATE,
+  enough_items BOOLEAN DEFAULT FALSE,
 
-  quantidade INT NOT NULL,
-  preco_unitario NUMERIC(10,2),
+  FOREIGN KEY (customer_id) REFERENCES customer(id)
+);
 
-  quantidade_atendida INT DEFAULT 0,
+-- =========================
+-- ORDER ITEM
+-- =========================
+CREATE TABLE order_item (
+  id SERIAL PRIMARY KEY,
+  order_id INT NOT NULL,
+  product_variation_id INT NOT NULL,
 
-  status VARCHAR(50) CHECK (status IN ('pendente','parcial','atendido')),
+  quantity INT NOT NULL,
+  unit_price NUMERIC(10,2),
 
-  CONSTRAINT fk_item_pedido
-    FOREIGN KEY (pedido_id) REFERENCES pedido(id),
+  fulfilled_quantity INT DEFAULT 0,
 
-  CONSTRAINT fk_item_variacao
-    FOREIGN KEY (variacao_produto_id) REFERENCES variacao_produto(id)
+  status VARCHAR(50) CHECK (
+    status IN ('pendente','parcial','atendido')
+  ),
+
+  FOREIGN KEY (order_id) REFERENCES customer_order(id),
+  FOREIGN KEY (product_variation_id) REFERENCES product_variation(id)
 );
 
 -- =========================
@@ -88,149 +101,188 @@ CREATE TABLE item_pedido (
 -- =========================
 CREATE TABLE material (
   id SERIAL PRIMARY KEY,
-  nome VARCHAR(255) NOT NULL,
-  unidade_base VARCHAR(50)
+  name VARCHAR(255) NOT NULL,
+  base_unit VARCHAR(50)
 );
 
 -- =========================
--- MATERIAL VARIACAO
+-- MATERIAL VARIATION
 -- =========================
-CREATE TABLE material_variacao (
+CREATE TABLE material_variation (
   id SERIAL PRIMARY KEY,
   material_id INT NOT NULL,
-  variacao VARCHAR(100),
-  estoque NUMERIC(10,2) DEFAULT 0,
+  variation VARCHAR(100),
+  stock NUMERIC(10,2) DEFAULT 0,
 
-  CONSTRAINT fk_material
-    FOREIGN KEY (material_id) REFERENCES material(id)
+  FOREIGN KEY (material_id) REFERENCES material(id)
 );
 
 -- =========================
--- PRODUTO MATERIAL (BOM)
+-- PRODUCT MATERIAL (BOM)
 -- =========================
-CREATE TABLE produto_material (
+CREATE TABLE product_material (
   id SERIAL PRIMARY KEY,
-  variacao_produto_id INT NOT NULL,
-  material_variacao_id INT NOT NULL,
-  quantidade NUMERIC(10,3) NOT NULL,
+  product_variation_id INT NOT NULL,
+  material_variation_id INT NOT NULL,
+  quantity NUMERIC(10,3) NOT NULL,
 
-  CONSTRAINT fk_pm_variacao
-    FOREIGN KEY (variacao_produto_id) REFERENCES variacao_produto(id),
-
-  CONSTRAINT fk_pm_material
-    FOREIGN KEY (material_variacao_id) REFERENCES material_variacao(id)
+  FOREIGN KEY (product_variation_id) REFERENCES product_variation(id),
+  FOREIGN KEY (material_variation_id) REFERENCES material_variation(id)
 );
 
 -- =========================
--- PROCESSO
+-- PROCESS
 -- =========================
-CREATE TABLE processo (
+CREATE TABLE process (
   id SERIAL PRIMARY KEY,
-  nome VARCHAR(255) NOT NULL
+  name VARCHAR(255) NOT NULL
 );
 
 -- =========================
--- PRODUTO PROCESSO
+-- PRODUCT PROCESS
 -- =========================
-CREATE TABLE produto_processo (
+CREATE TABLE product_process (
   id SERIAL PRIMARY KEY,
-  produto_id INT NOT NULL,
-  processo_id INT NOT NULL,
-  ordem INT,
-  tempo_estimado NUMERIC(10,2),
+  product_id INT NOT NULL,
+  process_id INT NOT NULL,
+  step_order INT,
+  estimated_time NUMERIC(10,2),
 
-  CONSTRAINT fk_pp_produto
-    FOREIGN KEY (produto_id) REFERENCES produto(id),
-
-  CONSTRAINT fk_pp_processo
-    FOREIGN KEY (processo_id) REFERENCES processo(id)
+  FOREIGN KEY (product_id) REFERENCES product(id),
+  FOREIGN KEY (process_id) REFERENCES process(id)
 );
 
 -- =========================
--- COSTUREIRO
+-- WORKER
 -- =========================
-CREATE TABLE costureiro (
+CREATE TABLE worker (
   id SERIAL PRIMARY KEY,
-  nome VARCHAR(255) NOT NULL,
-  ativo BOOLEAN DEFAULT TRUE
+  name VARCHAR(255) NOT NULL,
+  active BOOLEAN DEFAULT TRUE
 );
 
 -- =========================
--- PRODUCAO
+-- PRODUCTION
 -- =========================
-CREATE TABLE producao (
+CREATE TABLE production (
   id SERIAL PRIMARY KEY,
-  pedido_id INT,
+  order_id INT,
 
-  status VARCHAR(50) CHECK (status IN (
-    'planejado','aguardando_material','em_andamento','pausado','finalizado','cancelado'
-  )),
+  status VARCHAR(50) CHECK (
+    status IN (
+      'planejado',
+      'aguardando_material',
+      'em_andamento',
+      'pausado',
+      'finalizado',
+      'cancelado'
+    )
+  ),
 
-  data_inicio TIMESTAMP,
-  data_prevista_fim TIMESTAMP,
-  data_fim TIMESTAMP,
+  start_date TIMESTAMP,
+  expected_end_date TIMESTAMP,
+  end_date TIMESTAMP,
 
-  CONSTRAINT fk_producao_pedido
-    FOREIGN KEY (pedido_id) REFERENCES pedido(id)
+  FOREIGN KEY (order_id) REFERENCES customer_order(id)
 );
 
 -- =========================
--- PRODUCAO ITEM
+-- PRODUCTION ITEM
 -- =========================
-CREATE TABLE producao_item (
+CREATE TABLE production_item (
   id SERIAL PRIMARY KEY,
-  producao_id INT NOT NULL,
-  item_pedido_id INT,
-  variacao_produto_id INT NOT NULL,
+  production_id INT NOT NULL,
+  order_item_id INT,
+  product_variation_id INT NOT NULL,
 
-  quantidade_planejada INT,
-  quantidade_produzida INT DEFAULT 0,
+  planned_quantity INT,
+  produced_quantity INT DEFAULT 0,
 
-  status VARCHAR(50) CHECK (status IN (
-    'pendente','em_producao','parcial','concluido'
-  )),
+  status VARCHAR(50) CHECK (
+    status IN ('pendente','producao','parcial','concluido')
+  ),
 
-  CONSTRAINT fk_pi_producao
-    FOREIGN KEY (producao_id) REFERENCES producao(id),
-
-  CONSTRAINT fk_pi_item
-    FOREIGN KEY (item_pedido_id) REFERENCES item_pedido(id),
-
-  CONSTRAINT fk_pi_variacao
-    FOREIGN KEY (variacao_produto_id) REFERENCES variacao_produto(id)
+  FOREIGN KEY (production_id) REFERENCES production(id),
+  FOREIGN KEY (order_item_id) REFERENCES order_item(id),
+  FOREIGN KEY (product_variation_id) REFERENCES product_variation(id)
 );
 
 -- =========================
--- PRODUCAO PROCESSO
+-- PRODUCTION BATCH
 -- =========================
-CREATE TABLE producao_processo (
+CREATE TABLE production_batch (
   id SERIAL PRIMARY KEY,
-  producao_item_id INT NOT NULL,
 
-  processo_nome VARCHAR(255),
-  ordem INT,
+  production_id INT NOT NULL,
+  process_id INT NOT NULL,
 
-  status VARCHAR(50) CHECK (status IN ('pendente','fazendo','concluido')),
+  step_order INT,
 
-  data_inicio TIMESTAMP,
-  data_fim TIMESTAMP,
+  status VARCHAR(50),
 
-  tempo_estimado NUMERIC(10,2),
-  tempo_real NUMERIC(10,2),
+  start_date TIMESTAMP,
+  end_date TIMESTAMP,
 
-  costureiro_id INT,
-
-  CONSTRAINT fk_pp_item
-    FOREIGN KEY (producao_item_id) REFERENCES producao_item(id),
-
-  CONSTRAINT fk_pp_costureiro
-    FOREIGN KEY (costureiro_id) REFERENCES costureiro(id)
+  FOREIGN KEY (production_id) REFERENCES production(id),
+  FOREIGN KEY (process_id) REFERENCES process(id)
 );
 
 -- =========================
--- ÍNDICES IMPORTANTES
+-- BATCH ITEMS
 -- =========================
-CREATE INDEX idx_pedido_cliente ON pedido(cliente_id);
-CREATE INDEX idx_item_pedido ON item_pedido(pedido_id);
-CREATE INDEX idx_producao_pedido ON producao(pedido_id);
-CREATE INDEX idx_producao_item ON producao_item(producao_id);
+CREATE TABLE production_batch_item (
+  id SERIAL PRIMARY KEY,
+
+  production_batch_id INT NOT NULL,
+  production_item_id INT NOT NULL,
+
+  quantity INT,
+
+  FOREIGN KEY (production_batch_id) REFERENCES production_batch(id) ON DELETE CASCADE,
+  FOREIGN KEY (production_item_id) REFERENCES production_item(id)
+);
+
+-- =========================
+-- BATCH WORKERS
+-- =========================
+CREATE TABLE production_batch_worker (
+  id SERIAL PRIMARY KEY,
+
+  production_batch_id INT NOT NULL,
+  worker_id INT NOT NULL,
+
+  role VARCHAR(50),
+
+  start_date TIMESTAMP,
+  end_date TIMESTAMP,
+
+  produced_quantity INT DEFAULT 0,
+  worked_time NUMERIC(10,2),
+
+  FOREIGN KEY (production_batch_id) REFERENCES production_batch(id) ON DELETE CASCADE,
+  FOREIGN KEY (worker_id) REFERENCES worker(id)
+);
+
+-- =========================
+-- INDEXES
+-- =========================
+
+CREATE INDEX idx_order_customer ON customer_order(customer_id);
+CREATE INDEX idx_order_item_order ON order_item(order_id);
+CREATE INDEX idx_order_item_variation ON order_item(product_variation_id);
+
+CREATE INDEX idx_production_order ON production(order_id);
+
+CREATE INDEX idx_production_item_production ON production_item(production_id);
+CREATE INDEX idx_production_item_status ON production_item(status);
+
+CREATE INDEX idx_product_process_product ON product_process(product_id);
+
+CREATE INDEX idx_batch_production ON production_batch(production_id);
+CREATE INDEX idx_batch_process ON production_batch(process_id);
+
+CREATE INDEX idx_batch_item_batch ON production_batch_item(production_batch_id);
+CREATE INDEX idx_batch_item_item ON production_batch_item(production_item_id);
+
+CREATE INDEX idx_batch_worker_batch ON production_batch_worker(production_batch_id);
+CREATE INDEX idx_batch_worker_worker ON production_batch_worker(worker_id);

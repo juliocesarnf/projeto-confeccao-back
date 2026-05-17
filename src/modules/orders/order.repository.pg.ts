@@ -3,107 +3,111 @@ import { db } from "../../database/db.js";
 
 export class OrderRepositoryPg implements OrderRepositoryInterface {
 
-  async doneOrders(): Promise<any[]> {
+  async getDoneOrders(): Promise<any[]> {
     const result = await db.query(`
       SELECT 
-        p.id,
-        p.data,
-        p.status,
-        p.valor_total,
-        p.data_prevista_entrega,
+        co.id,
+        co.created_at AS "createdAt",
+        co.status,
+        co.total_value AS "totalValue",
+        co.due_date AS "dueDate",
+        co.enough_items AS "enoughItems",
 
-        c.nome AS cliente_nome,
+        c.name AS "customerName",
 
-        COUNT(ip.id) AS total_itens,
-        SUM(ip.quantidade) AS total_quantidade
+        COUNT(oi.id) AS "totalItems",
+        COALESCE(SUM(oi.quantity), 0) AS "totalQuantity"
 
-      FROM pedido p
-      JOIN cliente c ON c.id = p.cliente_id
-      LEFT JOIN item_pedido ip ON ip.pedido_id = p.id
+      FROM customer_order co
+      JOIN customer c ON c.id = co.customer_id
+      LEFT JOIN order_item oi ON oi.order_id = co.id
 
-      WHERE p.status = 'finalizado'
+      WHERE co.status = 'finalizado'
 
-      GROUP BY p.id, c.nome
-      ORDER BY p.data DESC
+      GROUP BY co.id, c.name
+      ORDER BY co.created_at DESC
     `);
 
     return result.rows;
   }
 
-  async progressOrders(): Promise<any[]> {
+  async getProgressOrders(): Promise<any[]> {
     const result = await db.query(`
       SELECT 
-        p.id,
-        p.data,
-        p.status,
-        p.valor_total,
-        p.data_prevista_entrega,
+        co.id,
+        co.created_at AS "createdAt",
+        co.status,
+        co.total_value AS "totalValue",
+        co.due_date AS "dueDate",
+        co.enough_items AS "enoughItems",
 
-        c.nome AS cliente_nome,
+        c.name AS "customerName",
 
-        COUNT(ip.id) AS total_itens,
-        SUM(ip.quantidade) AS total_quantidade
+        COUNT(oi.id) AS "totalItems",
+        COALESCE(SUM(oi.quantity), 0) AS "totalQuantity"
 
-      FROM pedido p
-      JOIN cliente c ON c.id = p.cliente_id
-      LEFT JOIN item_pedido ip ON ip.pedido_id = p.id
+      FROM customer_order co
+      JOIN customer c ON c.id = co.customer_id
+      LEFT JOIN order_item oi ON oi.order_id = co.id
 
-      WHERE p.status IN ('confirmado', 'em_producao')
+      WHERE co.status IN ('confirmado', 'em_producao')
 
-      GROUP BY p.id, c.nome
-      ORDER BY p.data DESC
+      GROUP BY co.id, c.name
+      ORDER BY co.created_at DESC
     `);
 
     return result.rows;
   }
 
-  async newOrders(): Promise<any[]> {
+  async getNewOrders(): Promise<any[]> {
     const result = await db.query(`
       SELECT 
-        p.id,
-        p.data,
-        p.status,
-        p.valor_total,
-        p.prazo,
+        co.id,
+        co.created_at AS "createdAt",
+        co.status,
+        co.total_value AS "totalValue",
+        co.due_date AS "dueDate",
+        co.enough_items AS "enoughItems",
 
-        c.nome AS cliente_nome,
+        c.name AS "customerName",
 
-        COUNT(ip.id) AS total_itens,
-        SUM(ip.quantidade) AS total_quantidade
+        COUNT(oi.id) AS "totalItems",
+        COALESCE(SUM(oi.quantity), 0) AS "totalQuantity"
 
-      FROM pedido p
-      JOIN cliente c ON c.id = p.cliente_id
-      LEFT JOIN item_pedido ip ON ip.pedido_id = p.id
+      FROM customer_order co
+      JOIN customer c ON c.id = co.customer_id
+      LEFT JOIN order_item oi ON oi.order_id = co.id
 
-      WHERE p.status = 'novo'
+      WHERE co.status = 'novo'
 
-      GROUP BY p.id, c.nome
-      ORDER BY p.data DESC
+      GROUP BY co.id, c.name
+      ORDER BY co.created_at DESC
     `);
 
     return result.rows;
   }
 
-  async allOrders(): Promise<any[]> {
+  async getAllOrders(): Promise<any[]> {
     const result = await db.query(`
       SELECT 
-        p.id,
-        p.data,
-        p.status,
-        p.valor_total,
-        p.prazo,
+        co.id,
+        co.created_at AS "createdAt",
+        co.status,
+        co.total_value AS "totalValue",
+        co.due_date AS "dueDate",
+        co.enough_items AS "enoughItems",
 
-        c.nome AS cliente_nome,
+        c.name AS "customerName",
 
-        COUNT(ip.id) AS total_itens,
-        SUM(ip.quantidade) AS total_quantidade
+        COUNT(oi.id) AS "totalItems",
+        COALESCE(SUM(oi.quantity), 0) AS "totalQuantity"
 
-      FROM pedido p
-      JOIN cliente c ON c.id = p.cliente_id
-      LEFT JOIN item_pedido ip ON ip.pedido_id = p.id
+      FROM customer_order co
+      JOIN customer c ON c.id = co.customer_id
+      LEFT JOIN order_item oi ON oi.order_id = co.id
 
-      GROUP BY p.id, c.nome
-      ORDER BY p.data DESC
+      GROUP BY co.id, c.name
+      ORDER BY co.created_at DESC
     `);
 
     return result.rows;
@@ -112,46 +116,63 @@ export class OrderRepositoryPg implements OrderRepositoryInterface {
   async getItemsByOrderId(id: number): Promise<any[]> {
     const result = await db.query(`
       SELECT 
-        ip.id,
-        ip.quantidade,
-        ip.preco_unitario,
-        ip.quantidade_atendida,
-        ip.status,
+        oi.id,
+        oi.quantity,
+        oi.unit_price AS "unitPrice",
+        oi.fulfilled_quantity AS "fulfilledQuantity",
+        oi.status,
 
-        vp.id AS variacao_id,
-        vp.tamanho,
-        vp.cor,
-        vp.sku,
+        pv.id AS "variationId",
+        pv.size,
+        pv.color,
+        pv.sku,
 
-        p.id AS produto_id,
-        p.nome AS produto_nome
+        p.id AS "productId",
+        p.name AS "productName"
 
-      FROM item_pedido ip
-      JOIN variacao_produto vp ON vp.id = ip.variacao_produto_id
-      JOIN produto p ON p.id = vp.produto_id
+      FROM order_item oi
+      JOIN product_variation pv ON pv.id = oi.product_variation_id
+      JOIN product p ON p.id = pv.product_id
 
-      WHERE ip.pedido_id = $1
-      ORDER BY ip.id
+      WHERE oi.order_id = $1
+      ORDER BY oi.id
     `, [id]);
 
     return result.rows.map(row => ({
-        id: row.id,
-        quantidade: row.quantidade,
-        preco_unitario: row.preco_unitario,
-        quantidade_atendida: row.quantidade_atendida,
-        status: row.status,
+      id: row.id,
+      quantity: row.quantity,
+      unitPrice: row.unitPrice,
+      fulfilledQuantity: row.fulfilledQuantity,
+      status: row.status,
 
-        produto: {
-          id: row.produto_id,
-          nome: row.produto_nome
-        },
+      product: {
+        id: row.productId,
+        name: row.productName
+      },
 
-        variacao: {
-          id: row.variacao_id,
-          tamanho: row.tamanho,
-          cor: row.cor,
-          sku: row.sku
-        }
+      variation: {
+        id: row.variationId,
+        size: row.size,
+        color: row.color,
+        sku: row.sku
+      }
     }));
+  }
+
+  async confirmOrder(id: number): Promise<any | null> {
+    const result = await db.query(`
+      UPDATE customer_order
+      SET status = 'confirmado'
+      WHERE id = $1
+      RETURNING
+        id,
+        created_at AS "createdAt",
+        status,
+        total_value AS "totalValue",
+        due_date AS "dueDate",
+        enough_items AS "enoughItems"
+    `, [id]);
+
+    return result.rows[0] ?? null;
   }
 }

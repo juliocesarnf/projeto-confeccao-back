@@ -4,22 +4,26 @@ export class OrderService {
   constructor(private readonly repository: OrderRepositoryInterface) {}
 
   async getDoneOrders() {
-    return this.repository.doneOrders();
+    return this.repository.getDoneOrders();
   }
 
   async getProgressOrders() {
-    return this.repository.progressOrders();
+    return this.repository.getProgressOrders();
   }
 
   async getNewOrders() {
-    return this.repository.newOrders();
+    return this.repository.getNewOrders();
   }
 
   async getOrders() {
-    return this.repository.allOrders();
+    return this.repository.getAllOrders();
   }
 
   async getItemsByOrderId(pedidoId: number) {
     return this.repository.getItemsByOrderId(pedidoId);
+  }
+
+  async confirmOrder(pedidoId: number) {
+    return this.repository.confirmOrder(pedidoId);
   }
 }

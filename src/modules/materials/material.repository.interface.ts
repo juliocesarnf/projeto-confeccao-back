@@ -1,4 +1,4 @@
 export interface MaterialRepositoryInterface {
-  findAllVariations(): Promise<any[]>;
+  getAllVariations(): Promise<any[]>;
   decrementStockByVariationId(variationId: number, quantity: number): Promise<void>;
 }
