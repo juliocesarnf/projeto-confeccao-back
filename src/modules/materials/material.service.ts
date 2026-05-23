@@ -1,12 +1,7 @@
 import type { MaterialRepositoryInterface } from "./material.repository.interface.js";
+import type { MaterialVariationInfo, PurchaseMaterialInput, RequiredMaterialInput } from "../../types/material.js";
 
-export type MaterialVariationInfo = {
-  variation_id: number;
-  material: string;
-  variation: string;
-  quantity: number;
-  base_unit: string;
-};
+export type { MaterialVariationInfo } from "../../types/material.js";
 
 export class MaterialService {
   constructor(private readonly repository: MaterialRepositoryInterface) {}
@@ -19,5 +14,13 @@ export class MaterialService {
     for (const item of variations) {
       await this.repository.decrementStockByVariationId(item.variation_id, item.quantity);
     }
+  }
+
+  async getRequiredMaterialsSuppliers(materials: RequiredMaterialInput[]) {
+    return this.repository.getRequiredMaterialsSuppliers(materials);
+  }
+
+  async purchaseMaterials(items: PurchaseMaterialInput[]) {
+    await this.repository.purchaseMaterials(items);
   }
 }

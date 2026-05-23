@@ -1,9 +1,9 @@
+import type { ProductionRepositoryInterface } from "./production.repository.intreface.js";
 import type {
   CreateProductionBatchInput,
   CreateProductionInput,
   CreateProductionItemInput,
-  ProductionRepositoryInterface,
-} from "./production.repository.intreface.js";
+} from "../../types/production.js";
 
 export class ProductionService {
   constructor(private readonly repository: ProductionRepositoryInterface) {}
@@ -73,6 +73,10 @@ export class ProductionService {
         );
       }
     });
+
+    if (new Set(batch.workers).size !== batch.workers.length) {
+      throw new Error(`batches[${batchIndex}].workers nao pode repetir funcionarios.`);
+    }
 
     if (!Array.isArray(batch.items) || batch.items.length === 0) {
       throw new Error(`batches[${batchIndex}].items deve ter pelo menos um item.`);

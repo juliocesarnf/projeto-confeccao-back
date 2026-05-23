@@ -2,6 +2,9 @@ import type { Request, Response } from "express";
 import { ProductService } from "./product.service.js";
 import { ProductRepositoryPg } from "./product.repository.pg.js";
 import { MaterialService } from "../materials/material.service.js";
+import type { ProductToDo, ProductProcess } from "../../types/product.js";
+
+export type { ProductToDo, ProductProcess } from "../../types/product.js";
 
 const repositorPg = new ProductRepositoryPg()
 const service = new ProductService(repositorPg);
@@ -42,14 +45,3 @@ export class ProductController {
 
 }
 
-export type ProductToDo = {
-  productId: number;
-  name: string;
-  quantity: number;
-  processes?: ProductProcess[];
-};
-
-export type ProductProcess = {
-  id: number;
-  name: string;
-};

@@ -102,7 +102,8 @@ CREATE TABLE order_item (
 CREATE TABLE material (
   id SERIAL PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
-  base_unit VARCHAR(50)
+  base_unit VARCHAR(50),
+  quantity_per_package INT DEFAULT 1 CHECK (quantity_per_package > 0)
 );
 
 -- =========================
@@ -146,7 +147,7 @@ CREATE TABLE product_process (
   product_id INT NOT NULL,
   process_id INT NOT NULL,
   step_order INT,
-  estimated_time NUMERIC(10,2),
+  dificulty_level INT,
 
   FOREIGN KEY (product_id) REFERENCES product(id),
   FOREIGN KEY (process_id) REFERENCES process(id)
@@ -180,7 +181,8 @@ CREATE TABLE production (
   ),
 
   start_date TIMESTAMP,
-  expected_end_date TIMESTAMP,
+  expect_dificulty INT,
+  expect_end_date TIMESTAMP,
   end_date TIMESTAMP,
 
   FOREIGN KEY (order_id) REFERENCES customer_order(id)
@@ -264,12 +266,37 @@ CREATE TABLE production_batch_worker (
 );
 
 -- =========================
+-- REPORT
+-- =========================
+CREATE TABLE report (
+  id SERIAL PRIMARY KEY,
+
+  type VARCHAR(80) NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  message TEXT NOT NULL,
+
+  severity VARCHAR(30) DEFAULT 'info',
+  status VARCHAR(30) DEFAULT 'pending',
+
+  entity_type VARCHAR(80),
+  entity_id INT,
+
+  metadata JSONB,
+
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  read_at TIMESTAMP
+);
+
+-- =========================
 -- INDEXES
 -- =========================
 
 CREATE INDEX idx_order_customer ON customer_order(customer_id);
 CREATE INDEX idx_order_item_order ON order_item(order_id);
 CREATE INDEX idx_order_item_variation ON order_item(product_variation_id);
+
+CREATE INDEX idx_material_supplier_material ON material_supplier(material_id);
+CREATE INDEX idx_material_supplier_supplier ON material_supplier(supplier_id);
 
 CREATE INDEX idx_production_order ON production(order_id);
 

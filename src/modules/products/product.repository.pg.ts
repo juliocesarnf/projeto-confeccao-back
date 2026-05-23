@@ -1,5 +1,5 @@
 import { db } from "../../database/db.js";
-import type { ProductToDo } from "./product.controller.js";
+import type { ProductToDo } from "../../types/product.js";
 import type { ProductRepositoryInterface } from "./product.repository.interface.js";
 
 export class ProductRepositoryPg implements ProductRepositoryInterface {
@@ -135,7 +135,7 @@ export class ProductRepositoryPg implements ProductRepositoryInterface {
         pp.product_id AS "productId",
         pp.process_id AS "processId",
         pp.step_order AS "stepOrder",
-        pp.estimated_time AS "estimatedTime",
+        pp.dificulty_level AS "dificultyLevel",
         pr.name AS "processName"
 
       FROM product_process pp
@@ -162,7 +162,7 @@ export class ProductRepositoryPg implements ProductRepositoryInterface {
         productId: row.productId,
         processId: row.processId,
         stepOrder: row.stepOrder,
-        estimatedTime: row.estimatedTime,
+        dificultyLevel: row.dificultyLevel,
         name: row.processName,
       });
 

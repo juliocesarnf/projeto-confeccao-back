@@ -1,4 +1,4 @@
-import type { ProductToDo } from "./product.controller.js";
+import type { ProductToDo } from "../../types/product.js";
 
 export interface ProductRepositoryInterface {
   getMaterialsForProductVariationId(id: number): Promise<any[]>;

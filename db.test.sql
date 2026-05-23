@@ -1,45 +1,49 @@
 -- ============================================================
 -- SEED DE DADOS PARA TESTE
 -- ============================================================
--- Popula todas as tabelas do sistema com dados fictícios
--- suficientes para exercitar as principais funcionalidades:
---   • Cadastros base (clientes, fornecedores, produtos, materiais)
---   • Variações de produtos e materiais com estoque
---   • Bill of Materials (produto_material)
---   • Relação produto–fornecedor com preços distintos
---   • Pedidos de clientes com itens e status derivados
---   • Processos de fabricação por produto
---   • Trabalhadores cadastrados
+
 -- ============================================================
+-- 0 – LIMPEZA DAS TABELAS
+-- ============================================================
+TRUNCATE TABLE
+  production_batch_worker,
+  production_batch_item,
+  production_batch,
+  production_item,
+  production,
+  report,
+  order_item,
+  customer_order,
+  product_material,
+  material_supplier,
+  product_variation,
+  product_process,
+  product,
+  material_variation,
+  material,
+  process,
+  worker,
+  supplier,
+  customer
+RESTART IDENTITY CASCADE;
 
 
 -- ============================================================
 -- 1. DADOS BASE
 -- ============================================================
 
--- ----------------------------------------------------------
--- 1.1 Clientes
--- 10 clientes com nome e telefone fictícios.
--- Alguns clientes aparecerão em mais de um pedido.
--- ----------------------------------------------------------
 INSERT INTO customer (name, phone) VALUES
-  ('João Silva',      '21999990001'),
-  ('Maria Oliveira',  '21999990002'),
-  ('Carlos Souza',    '21999990003'),
-  ('Ana Costa',       '21999990004'),
-  ('Pedro Santos',    '21999990005'),
-  ('Juliana Lima',    '21999990006'),
-  ('Marcos Pereira',  '21999990007'),
-  ('Fernanda Alves',  '21999990008'),
-  ('Ricardo Gomes',   '21999990009'),
-  ('Patrícia Rocha',  '21999990010');
+  ('Loja AAA', '21999990001'),
+  ('Loja BBB', '21999990002'),
+  ('Loja CCC', '21999990003'),
+  ('Loja DDD', '21999990004'),
+  ('Loja EEE', '21999990005'),
+  ('Loja FFF', '21999990006'),
+  ('Loja GGG', '21999990007'),
+  ('Loja HHH', '21999990008'),
+  ('Loja III', '21999990009'),
+  ('Loja JJJ', '21999990010');
 
-
--- ----------------------------------------------------------
--- 1.2 Fornecedores
--- 5 fornecedores genéricos.
--- A relação com produtos é feita na seção 4.
--- ----------------------------------------------------------
 INSERT INTO supplier (name) VALUES
   ('Fornecedor Alpha'),
   ('Fornecedor Beta'),
@@ -47,52 +51,40 @@ INSERT INTO supplier (name) VALUES
   ('Fornecedor Delta'),
   ('Fornecedor Omega');
 
-
--- ----------------------------------------------------------
--- 1.3 Produtos
--- 20 produtos distribuídos em 6 categorias:
---   Vestuário (10), Esportivo (4), Uniforme (1),
---   Profissional (2), Dormir (2), Acessórios (1)
--- Todos ativos por padrão.
--- ----------------------------------------------------------
 INSERT INTO product (name, description, category, active) VALUES
-  ('Produto 1',  'Lorem ipsum', 'Vestuário',    TRUE),
-  ('Produto 2',  'Lorem ipsum', 'Vestuário',    TRUE),
-  ('Produto 3',  'Lorem ipsum', 'Vestuário',    TRUE),
-  ('Produto 4',  'Lorem ipsum', 'Vestuário',    TRUE),
-  ('Produto 5',  'Lorem ipsum', 'Vestuário',    TRUE),
-  ('Produto 6',  'Lorem ipsum', 'Vestuário',    TRUE),
-  ('Produto 7',  'Lorem ipsum', 'Vestuário',    TRUE),
-  ('Produto 8',  'Lorem ipsum', 'Vestuário',    TRUE),
-  ('Produto 9',  'Lorem ipsum', 'Vestuário',    TRUE),
-  ('Produto 10', 'Lorem ipsum', 'Vestuário',    TRUE),
-  ('Produto 11', 'Lorem ipsum', 'Esportivo',    TRUE),
-  ('Produto 12', 'Lorem ipsum', 'Esportivo',    TRUE),
-  ('Produto 13', 'Lorem ipsum', 'Esportivo',    TRUE),
-  ('Produto 14', 'Lorem ipsum', 'Esportivo',    TRUE),
-  ('Produto 15', 'Lorem ipsum', 'Uniforme',     TRUE),
-  ('Produto 16', 'Lorem ipsum', 'Profissional', TRUE),
-  ('Produto 17', 'Lorem ipsum', 'Profissional', TRUE),
-  ('Produto 18', 'Lorem ipsum', 'Dormir',       TRUE),
-  ('Produto 19', 'Lorem ipsum', 'Dormir',       TRUE),
-  ('Produto 20', 'Lorem ipsum', 'Acessórios',   TRUE);
+  ('Produto 1',  'Lorem ipsum', 'Lingerie',  TRUE),
+  ('Produto 2',  'Lorem ipsum', 'Lingerie',  TRUE),
+  ('Produto 3',  'Lorem ipsum', 'Lingerie',  TRUE),
+  ('Produto 4',  'Lorem ipsum', 'Lingerie',  TRUE),
+  ('Produto 5',  'Lorem ipsum', 'Lingerie',  TRUE),
+  ('Produto 6',  'Lorem ipsum', 'Vestuário', TRUE),
+  ('Produto 7',  'Lorem ipsum', 'Vestuário', TRUE),
+  ('Produto 8',  'Lorem ipsum', 'Vestuário', TRUE),
+  ('Produto 9',  'Lorem ipsum', 'Vestuário', TRUE),
+  ('Produto 10', 'Lorem ipsum', 'Vestuário', TRUE),
+  ('Produto 11', 'Lorem ipsum', 'Vestuário', TRUE),
+  ('Produto 12', 'Lorem ipsum', 'Vestuário', TRUE),
+  ('Produto 13', 'Lorem ipsum', 'Vestuário', TRUE),
+  ('Produto 14', 'Lorem ipsum', 'Vestuário', TRUE),
+  ('Produto 15', 'Lorem ipsum', 'Conjunto',  TRUE),
+  ('Produto 16', 'Lorem ipsum', 'Conjunto',  TRUE),
+  ('Produto 17', 'Lorem ipsum', 'Conjunto',  TRUE),
+  ('Produto 18', 'Lorem ipsum', 'Conjunto',  TRUE),
+  ('Produto 19', 'Lorem ipsum', 'Conjunto',  TRUE),
+  ('Produto 20', 'Lorem ipsum', 'Conjunto',  TRUE);
 
-
--- ----------------------------------------------------------
--- 1.4 Matérias-primas
--- 10 materiais: 6 vendidos por unidade (UN) e 4 por metro (M).
--- ----------------------------------------------------------
-INSERT INTO material (name, base_unit) VALUES
-  ('Material 1',  'UN'),
-  ('Material 2',  'UN'),
-  ('Material 3',  'UN'),
-  ('Material 4',  'UN'),
-  ('Material 5',  'UN'),
-  ('Material 6',  'UN'),
-  ('Material 7',  'M'),
-  ('Material 8',  'M'),
-  ('Material 9',  'M'),
-  ('Material 10', 'M');
+-- MATERIAIS COM QUANTIDADE POR PACOTE (1, 50 ou 100)
+INSERT INTO material (name, base_unit, quantity_per_package) VALUES
+  ('Material 1',  'UN', (ARRAY[1, 50, 100])[floor(random() * 3)::int + 1]),
+  ('Material 2',  'UN', (ARRAY[1, 50, 100])[floor(random() * 3)::int + 1]),
+  ('Material 3',  'UN', (ARRAY[1, 50, 100])[floor(random() * 3)::int + 1]),
+  ('Material 4',  'UN', (ARRAY[1, 50, 100])[floor(random() * 3)::int + 1]),
+  ('Material 5',  'UN', (ARRAY[1, 50, 100])[floor(random() * 3)::int + 1]),
+  ('Material 6',  'UN', (ARRAY[1, 50, 100])[floor(random() * 3)::int + 1]),
+  ('Material 7',  'M',  (ARRAY[1, 50, 100])[floor(random() * 3)::int + 1]),
+  ('Material 8',  'M',  (ARRAY[1, 50, 100])[floor(random() * 3)::int + 1]),
+  ('Material 9',  'M',  (ARRAY[1, 50, 100])[floor(random() * 3)::int + 1]),
+  ('Material 10', 'M',  (ARRAY[1, 50, 100])[floor(random() * 3)::int + 1]);
 
 
 -- ============================================================
@@ -100,10 +92,7 @@ INSERT INTO material (name, base_unit) VALUES
 -- ============================================================
 
 -- ----------------------------------------------------------
--- 2.1 Variações de materiais
--- Para cada material, gera entre 4 e 10 variações
--- (ex.: cores, bitolas, espessuras) com estoque inicial
--- aleatório entre 0 e 100.
+-- 2.1 Variações de materiais (4–10 por material)
 -- ----------------------------------------------------------
 DO $$
 DECLARE
@@ -112,16 +101,62 @@ DECLARE
   i             INT;
 BEGIN
   FOR m IN SELECT id FROM material LOOP
-
-    -- Sorteia quantas variações este material terá (4 a 10)
     qtd_variacoes := (FLOOR(random() * 7 + 4))::INT;
-
     FOR i IN 1..qtd_variacoes LOOP
       INSERT INTO material_variation (material_id, variation, stock)
       VALUES (
         m.id,
         'Variação ' || i,
-        ROUND((random() * 100)::numeric, 2)   -- estoque entre 0 e 100
+        ROUND(
+          CASE
+            WHEN random() < 0.20 THEN   50 + random() *  150
+            WHEN random() < 0.70 THEN  200 + random() *  800
+            ELSE                       1000 + random() * 4000
+          END
+        ::numeric, 2)
+      );
+    END LOOP;
+  END LOOP;
+END $$;
+
+
+-- ----------------------------------------------------------
+-- 2.2 Fornecedores por material
+-- ----------------------------------------------------------
+DO $$
+DECLARE
+  m        RECORD;
+  num_sups INT;
+  chosen   INT[];
+  sup_id   INT;
+  i        INT;
+BEGIN
+  FOR m IN SELECT id FROM material LOOP
+
+    num_sups := CASE
+      WHEN random() < 0.40 THEN 1
+      WHEN random() < 0.75 THEN 2
+      ELSE                      3
+    END;
+
+    chosen := ARRAY[]::int[];
+
+    FOR i IN 1..num_sups LOOP
+      SELECT s.id INTO sup_id
+      FROM supplier s
+      WHERE s.id <> ALL(chosen)
+      ORDER BY random()
+      LIMIT 1;
+
+      EXIT WHEN sup_id IS NULL;
+
+      chosen := array_append(chosen, sup_id);
+
+      INSERT INTO material_supplier (material_id, supplier_id, price)
+      VALUES (
+        m.id,
+        sup_id,
+        ROUND((random() * 45 + 5)::numeric, 2)
       );
     END LOOP;
 
@@ -130,45 +165,33 @@ END $$;
 
 
 -- ----------------------------------------------------------
--- 2.2 Variações de produtos
--- Para cada produto, gera entre 6 e 10 variações com:
---   • SKU no formato  SKU-<product_id>-<sequência>
---   • Tamanho aleatório: P / M / G / GG / EXG
---   • Cor aleatória: Preto / Branco / Azul / Vermelho / Verde
---   • Estoque atual entre 0 e 100
---   • Estoque mínimo entre 0 e 10
---   • Preço base entre R$ 50 e R$ 250
+-- 2.3 Variações de produtos (6–10 por produto)
 -- ----------------------------------------------------------
 INSERT INTO product_variation (
   product_id, sku, size, color, stock, minimum_stock, base_price, active
 )
 SELECT
   p.id,
-  'SKU-' || p.id || '-' || gs                                              AS sku,
-  (ARRAY['P','M','G','GG','EXG'])[floor(random() * 5)::int + 1]           AS size,
-  (ARRAY['Preto','Branco','Azul','Vermelho','Verde'])[floor(random() * 5)::int + 1] AS color,
-  ROUND((random() * 100)::numeric, 2)                                      AS stock,
-  ROUND((random() * 10)::numeric,  2)                                      AS minimum_stock,
-  ROUND((random() * 200 + 50)::numeric, 2)                                 AS base_price,
+  'SKU-' || p.id || '-' || gs                                                        AS sku,
+  (ARRAY['P','M','G','GG','EXG'])[floor(random() * 5)::int + 1]                     AS size,
+  (ARRAY['Preto','Branco','Azul','Vermelho','Verde'])[floor(random() * 5)::int + 1]  AS color,
+  ROUND((20 + random() * 180)::numeric, 2)                                           AS stock,
+  ROUND((random() * 40 + 10)::numeric, 2)                                            AS minimum_stock,
+  ROUND((random() * 200 + 50)::numeric, 2)                                           AS base_price,
   TRUE
 FROM product p
--- generate_series produz 1 linha por variação; o limite superior varia de 6 a 10
 CROSS JOIN LATERAL generate_series(1, (floor(random() * 5) + 6)::int) gs;
 
 
 -- ----------------------------------------------------------
--- 2.3 Bill of Materials (BOM) — materiais por variação de produto
--- Para cada variação de produto, associa entre 3 e 7 variações
--- de material escolhidas aleatoriamente, com quantidade
--- necessária entre 0,1 e 5,0 (3 casas decimais).
+-- 2.4 Bill of Materials — materiais por variação de produto
 -- ----------------------------------------------------------
 INSERT INTO product_material (product_variation_id, material_variation_id, quantity)
 SELECT
   vp.id,
   mv.id,
-  ROUND((random() * 4.9 + 0.1)::numeric, 3)   -- qtd entre 0.1 e 5.0
+  ROUND((random() * 4.9 + 0.1)::numeric, 3)
 FROM product_variation vp
--- Subquery lateral: escolhe de 3 a 7 material_variations aleatórias para cada variação
 CROSS JOIN LATERAL (
   SELECT id
   FROM material_variation
@@ -178,181 +201,189 @@ CROSS JOIN LATERAL (
 
 
 -- ============================================================
--- 3. RELAÇÃO PRODUTO → FORNECEDOR
+-- 3. PEDIDOS DE CLIENTES
 -- ============================================================
--- Garante ao menos 1 fornecedor por produto.
--- A distribuição de fornecedores segue o seguinte critério:
---   • ~50 % dos produtos terão 1 fornecedor
---   • ~35 % terão 2 fornecedores
---   • ~15 % terão 3 fornecedores
---
--- O preço de cada fornecedor é independente e varia entre
--- R$ 10 e R$ 160, simulando negociações distintas.
--- A constraint UNIQUE (product_id, supplier_id) da tabela
--- é respeitada: um mesmo fornecedor não é inserido duas vezes
--- para o mesmo produto.
--- ============================================================
+
 DO $$
 DECLARE
-  p          RECORD;   -- linha de product
-  num_sups   INT;      -- quantidade de fornecedores deste produto
-  chosen     INT[];    -- ids já inseridos nesta iteração (evita duplicata)
-  sup_id     INT;      -- id do fornecedor sorteado
-  i          INT;
+  day_slots INT[][] := ARRAY[
+    ARRAY[0,  3], ARRAY[1,  3], ARRAY[2,  3], ARRAY[3,  3], ARRAY[4,  3],
+    ARRAY[5,  2], ARRAY[6,  2], ARRAY[7,  2], ARRAY[8,  2], ARRAY[9,  2],
+    ARRAY[10, 2], ARRAY[12, 2], ARRAY[14, 2], ARRAY[17, 2], ARRAY[20, 2],
+    ARRAY[23, 2], ARRAY[25, 2], ARRAY[28, 2], ARRAY[30, 2]
+  ];
+
+  order_dates        TIMESTAMP[];
+  slot               INT[];
+  dias_atras         INT;
+  qtd_dia            INT;
+  d                  INT;
+
+  order_index        INT := 0;
+  new_order_id       INT;
+  cust_id            INT;
+  venc               DATE;
+  total_acc          NUMERIC(10,2);
+
+  num_items          INT;
+  qty_ordered        INT;
+  unit_p             NUMERIC(10,2);
+
+  fulfilled_qty      INT;
+  item_status        VARCHAR(50);
+
+  used_pv_ids        INT[];
+  used_product_ids   INT[];
+
+  chosen_product_id  INT;
+  pv_row             RECORD;
+  i                  INT;
+
 BEGIN
-  FOR p IN SELECT id FROM product LOOP
 
-    -- Sorteia quantos fornecedores este produto terá
-    -- Dois random() independentes aproximam as probabilidades descritas acima
-    num_sups := CASE
-      WHEN random() < 0.50 THEN 1   -- 50 % → 1 fornecedor
-      WHEN random() < 0.70 THEN 2   -- 35 % → 2 fornecedores (0.50 a 0.85 do range restante)
-      ELSE                       3   -- 15 % → 3 fornecedores
-    END;
+  order_dates := ARRAY[]::TIMESTAMP[];
 
-    chosen := ARRAY[]::int[];   -- reinicia a lista para cada produto
+  FOREACH slot SLICE 1 IN ARRAY day_slots LOOP
+    dias_atras := slot[1];
+    qtd_dia    := slot[2];
+    FOR d IN 1..qtd_dia LOOP
+      order_dates := array_append(
+        order_dates,
+        (CURRENT_DATE - dias_atras * INTERVAL '1 day')
+          + INTERVAL '8 hours'
+          + (random() * INTERVAL '8 hours')
+      );
+    END LOOP;
+  END LOOP;
 
-    FOR i IN 1..num_sups LOOP
+  WHILE array_length(order_dates, 1) < 50 LOOP
+    order_dates := array_append(
+      order_dates,
+      CURRENT_TIMESTAMP - (random() * INTERVAL '5 days')
+    );
+  END LOOP;
 
-      -- Sorteia um fornecedor ainda não vinculado a este produto
-      SELECT s.id INTO sup_id
-      FROM supplier s
-      WHERE s.id <> ALL(chosen)
+  FOR order_index IN 1..50 LOOP
+
+    cust_id := ((order_index - 1) % 9) + 1;
+
+    venc := order_dates[order_index]::DATE
+              + ((floor(random() * 34) + 7)::INT * INTERVAL '1 day');
+
+    INSERT INTO customer_order (
+      customer_id, created_at, status, total_value, due_date, enough_items
+    ) VALUES (
+      cust_id,
+      order_dates[order_index],
+      'novo',
+      0.00,
+      venc,
+      FALSE
+    )
+    RETURNING id INTO new_order_id;
+
+    num_items   := (floor(random() * 9) + 4)::INT;
+    used_pv_ids := ARRAY[]::INT[];
+    total_acc   := 0;
+
+    -- Pedidos 1–25: MONO-PRODUTO
+    IF order_index <= 25 THEN
+
+      SELECT id INTO chosen_product_id
+      FROM product
       ORDER BY random()
       LIMIT 1;
 
-      -- Sai do loop se todos os fornecedores já foram usados (improvável, mas seguro)
-      EXIT WHEN sup_id IS NULL;
+      FOR i IN 1..num_items LOOP
 
-      chosen := array_append(chosen, sup_id);
+        SELECT pv.id, pv.base_price
+          INTO pv_row
+          FROM product_variation pv
+         WHERE pv.product_id = chosen_product_id
+           AND pv.id <> ALL(used_pv_ids)
+         ORDER BY random()
+         LIMIT 1;
 
-      INSERT INTO product_supplier (product_id, supplier_id, price)
-      VALUES (
-        p.id,
-        sup_id,
-        ROUND((random() * 150 + 10)::numeric, 2)   -- preço entre R$ 10 e R$ 160
-      );
+        EXIT WHEN pv_row IS NULL;
 
-    END LOOP;
+        used_pv_ids   := array_append(used_pv_ids, pv_row.id);
+        qty_ordered   := ((floor(random() * 23) + 2)::INT) * 5;
+        unit_p        := ROUND((pv_row.base_price * (0.85 + random() * 0.30))::NUMERIC, 2);
+        fulfilled_qty := ROUND(qty_ordered * (0.10 + random() * 0.10))::INT;
+        item_status   := CASE WHEN fulfilled_qty > 0 THEN 'parcial' ELSE 'pendente' END;
+
+        INSERT INTO order_item (
+          order_id, product_variation_id,
+          quantity, unit_price,
+          fulfilled_quantity, status
+        ) VALUES (
+          new_order_id, pv_row.id,
+          qty_ordered, unit_p,
+          fulfilled_qty, item_status
+        );
+
+        total_acc := total_acc + (qty_ordered * unit_p);
+
+      END LOOP;
+
+    -- Pedidos 26–50: MULTI-PRODUTO
+    ELSE
+
+      used_product_ids := ARRAY[]::INT[];
+
+      FOR i IN 1..num_items LOOP
+
+        SELECT pv.id, pv.base_price
+          INTO pv_row
+          FROM product_variation pv
+         WHERE pv.product_id <> ALL(used_product_ids)
+           AND pv.id         <> ALL(used_pv_ids)
+         ORDER BY random()
+         LIMIT 1;
+
+        EXIT WHEN pv_row IS NULL;
+
+        SELECT product_id INTO chosen_product_id
+          FROM product_variation
+         WHERE id = pv_row.id;
+
+        used_product_ids := array_append(used_product_ids, chosen_product_id);
+        used_pv_ids      := array_append(used_pv_ids,      pv_row.id);
+
+        qty_ordered   := ((floor(random() * 23) + 2)::INT) * 5;
+        unit_p        := ROUND((pv_row.base_price * (0.85 + random() * 0.30))::NUMERIC, 2);
+        fulfilled_qty := ROUND(qty_ordered * (0.10 + random() * 0.10))::INT;
+        item_status   := CASE WHEN fulfilled_qty > 0 THEN 'parcial' ELSE 'pendente' END;
+
+        INSERT INTO order_item (
+          order_id, product_variation_id,
+          quantity, unit_price,
+          fulfilled_quantity, status
+        ) VALUES (
+          new_order_id, pv_row.id,
+          qty_ordered, unit_p,
+          fulfilled_qty, item_status
+        );
+
+        total_acc := total_acc + (qty_ordered * unit_p);
+
+      END LOOP;
+
+    END IF;
+
+    UPDATE customer_order
+       SET total_value = ROUND(total_acc, 2)
+     WHERE id = new_order_id;
+
   END LOOP;
+
 END $$;
 
 
 -- ============================================================
--- 4. PEDIDOS DE CLIENTES
+-- 4. PRODUÇÃO
 -- ============================================================
 
--- ----------------------------------------------------------
--- 4.1 Cabeçalhos dos pedidos
--- 20 pedidos com vencimentos escalonados (1 a 20 dias a partir
--- de hoje). Os clientes 1, 2, 3, 4, 5 e 6 aparecem mais de
--- uma vez para simular clientes recorrentes.
--- Todos iniciam com status 'novo'.
--- ----------------------------------------------------------
-INSERT INTO customer_order (customer_id, created_at, status, total_value, due_date) VALUES
-  (1, CURRENT_TIMESTAMP, 'novo',  150.00, CURRENT_DATE + INTERVAL '1  day'),
-  (2, CURRENT_TIMESTAMP, 'novo',  180.00, CURRENT_DATE + INTERVAL '2  day'),
-  (3, CURRENT_TIMESTAMP, 'novo',  210.00, CURRENT_DATE + INTERVAL '3  day'),
-  (4, CURRENT_TIMESTAMP, 'novo',  240.00, CURRENT_DATE + INTERVAL '4  day'),
-  (5, CURRENT_TIMESTAMP, 'novo',  270.00, CURRENT_DATE + INTERVAL '5  day'),
-  (6, CURRENT_TIMESTAMP, 'novo',  300.00, CURRENT_DATE + INTERVAL '6  day'),
-  (7, CURRENT_TIMESTAMP, 'novo',  330.00, CURRENT_DATE + INTERVAL '7  day'),
-  (8, CURRENT_TIMESTAMP, 'novo',  360.00, CURRENT_DATE + INTERVAL '8  day'),
-  (9, CURRENT_TIMESTAMP, 'novo',  390.00, CURRENT_DATE + INTERVAL '9  day'),
-  (1, CURRENT_TIMESTAMP, 'novo',  420.00, CURRENT_DATE + INTERVAL '10 day'),
-  (2, CURRENT_TIMESTAMP, 'novo',  450.00, CURRENT_DATE + INTERVAL '11 day'),
-  (3, CURRENT_TIMESTAMP, 'novo',  480.00, CURRENT_DATE + INTERVAL '12 day'),
-  (4, CURRENT_TIMESTAMP, 'novo',  510.00, CURRENT_DATE + INTERVAL '13 day'),
-  (5, CURRENT_TIMESTAMP, 'novo',  540.00, CURRENT_DATE + INTERVAL '14 day'),
-  (6, CURRENT_TIMESTAMP, 'novo',  570.00, CURRENT_DATE + INTERVAL '15 day'),
-  (7, CURRENT_TIMESTAMP, 'novo',  600.00, CURRENT_DATE + INTERVAL '16 day'),
-  (8, CURRENT_TIMESTAMP, 'novo',  630.00, CURRENT_DATE + INTERVAL '17 day'),
-  (9, CURRENT_TIMESTAMP, 'novo',  660.00, CURRENT_DATE + INTERVAL '18 day'),
-  (1, CURRENT_TIMESTAMP, 'novo',  690.00, CURRENT_DATE + INTERVAL '19 day'),
-  (2, CURRENT_TIMESTAMP, 'novo',  720.00, CURRENT_DATE + INTERVAL '20 day');
-
-
--- ----------------------------------------------------------
--- 4.2 Itens dos pedidos
--- Para cada pedido, gera entre 4 e 10 itens com:
---   • product_variation_id único dentro do mesmo pedido
---   • quantidade pedida entre 1 e 20
---   • fulfilled_quantity:
---       – 20 % de chance de ser zero (item ainda não atendido)
---       – 80 % de chance de valor aleatório entre 1 e quantity
---   • status derivado do atendimento:
---       – 0             → 'pendente'
---       – igual qty     → 'atendido'
---       – entre 0 e qty → 'parcial'
---   • preço unitário entre R$ 20 e R$ 220
--- ----------------------------------------------------------
-DO $$
-DECLARE
-  o         RECORD;   -- linha de customer_order
-  pv_id     INT;      -- id da variação de produto sorteada
-  num_items INT;      -- total de itens deste pedido
-  qty       INT;      -- quantidade pedida
-  fulfilled INT;      -- quantidade já atendida
-  i         INT;
-  used_vars INT[];    -- variações já usadas neste pedido (garante unicidade)
-BEGIN
-  FOR o IN SELECT id FROM customer_order LOOP
-
-    num_items := (floor(random() * 7) + 4)::int;   -- entre 4 e 10 itens
-    used_vars := ARRAY[]::int[];
-
-    FOR i IN 1..num_items LOOP
-
-      -- Sorteia uma variação ainda não usada neste pedido
-      SELECT pv.id INTO pv_id
-      FROM product_variation pv
-      WHERE pv.id <> ALL(used_vars)
-      ORDER BY random()
-      LIMIT 1;
-
-      EXIT WHEN pv_id IS NULL;   -- segurança: sai se não houver mais variações
-
-      used_vars := array_append(used_vars, pv_id);
-
-      qty := (floor(random() * 20) + 1)::int;
-
-      -- 20 % de chance de atendimento zero, 80 % de atendimento parcial ou total
-      IF random() < 0.20 THEN
-        fulfilled := 0;
-      ELSE
-        fulfilled := (floor(random() * qty) + 1)::int;
-      END IF;
-
-      INSERT INTO order_item (
-        order_id, product_variation_id,
-        quantity, unit_price,
-        fulfilled_quantity, status
-      ) VALUES (
-        o.id,
-        pv_id,
-        qty,
-        ROUND((random() * 200 + 20)::numeric, 2),
-        fulfilled,
-        CASE
-          WHEN fulfilled = 0    THEN 'pendente'
-          WHEN fulfilled >= qty THEN 'atendido'
-          ELSE                       'parcial'
-        END
-      );
-
-    END LOOP;
-  END LOOP;
-END $$;
-
-
--- ============================================================
--- 5. PRODUÇÃO
--- ============================================================
-
--- ----------------------------------------------------------
--- 5.1 Processos de fabricação
--- 6 etapas fixas que representam o fluxo típico de confecção.
--- ----------------------------------------------------------
 INSERT INTO process (name) VALUES
   ('Corte'),
   ('Costura'),
@@ -361,66 +392,37 @@ INSERT INTO process (name) VALUES
   ('Controle de Qualidade'),
   ('Embalagem');
 
-
--- ----------------------------------------------------------
--- 5.2 Processos por produto
--- Para cada produto, associa entre 2 e 4 processos escolhidos
--- aleatoriamente, mantendo a ordem (step_order sequencial).
--- O tempo estimado por etapa varia de 15 a 120 minutos.
--- Cada processo aparece no máximo uma vez por produto.
--- ----------------------------------------------------------
 DO $$
 DECLARE
-  p          RECORD;   -- linha de product
-  proc_id    INT;      -- id do processo sorteado
-  num_procs  INT;      -- quantidade de processos deste produto
-  step       INT;      -- contador de ordem das etapas
-  used_procs INT[];    -- processos já associados (evita duplicata)
+  p          RECORD;
+  proc_id    INT;
+  num_procs  INT;
+  step       INT;
+  used_procs INT[];
   i          INT;
 BEGIN
   FOR p IN SELECT id FROM product LOOP
-
-    num_procs  := (floor(random() * 3) + 2)::int;   -- 2, 3 ou 4 processos
+    num_procs  := (floor(random() * 3) + 2)::int;
     used_procs := ARRAY[]::int[];
     step       := 1;
-
     FOR i IN 1..num_procs LOOP
-
-      -- Sorteia um processo ainda não usado neste produto
       SELECT pr.id INTO proc_id
       FROM process pr
       WHERE pr.id <> ALL(used_procs)
       ORDER BY random()
       LIMIT 1;
-
       EXIT WHEN proc_id IS NULL;
-
       used_procs := array_append(used_procs, proc_id);
-
-      INSERT INTO product_process (product_id, process_id, step_order, estimated_time)
-      VALUES (
-        p.id,
-        proc_id,
-        step,
-        ROUND((random() * 105 + 15)::numeric, 2)   -- tempo entre 15 e 120 min
-      );
-
+      INSERT INTO product_process (product_id, process_id, step_order, dificulty_level)
+      VALUES (p.id, proc_id, step, ROUND((random() * 6 + 2)::numeric, 2));
       step := step + 1;
-
     END LOOP;
   END LOOP;
 END $$;
 
-
--- ----------------------------------------------------------
--- 5.3 Trabalhadores
--- 5 costureiros cadastrados, todos inativos inicialmente.
--- Ative-os manualmente ou via seed complementar antes de
--- criar ordens de produção reais.
--- ----------------------------------------------------------
 INSERT INTO worker (name, active) VALUES
-  ('Costureiro 1', FALSE),
-  ('Costureiro 2', FALSE),
-  ('Costureiro 3', FALSE),
-  ('Costureiro 4', FALSE),
-  ('Costureiro 5', FALSE);
+  ('Costureiro 1', TRUE),
+  ('Costureiro 2', TRUE),
+  ('Costureiro 3', TRUE),
+  ('Costureiro 4', TRUE),
+  ('Costureiro 5', TRUE);

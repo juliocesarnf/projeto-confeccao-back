@@ -4,5 +4,5 @@ export interface OrderRepositoryInterface {
   getNewOrders(): Promise<any[]>;
   getAllOrders(): Promise<any[]>;
   getItemsByOrderId(id: number): Promise<any[]>;
-  confirmOrder(id: number): Promise<any | null>; 
+  confirmOrder(id: number): Promise<any | null>;
 }

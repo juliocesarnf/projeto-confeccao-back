@@ -5,7 +5,8 @@ const MaterialRouter = Router();
 const controller = new MaterialController();
 
 MaterialRouter.get('/variacoes', controller.getVariations.bind(controller));
+MaterialRouter.post('/fornecedores', controller.getRequiredMaterialsSuppliers.bind(controller));
 MaterialRouter.post('/variacoes/remover-estoque', controller.removeStockVariations.bind(controller));
-
+MaterialRouter.post('/compra', controller.purchaseMaterials.bind(controller));
 
 export default MaterialRouter;

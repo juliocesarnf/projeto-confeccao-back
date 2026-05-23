@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
 import { db } from "../../database/db.js";
+import type { ProductionRepositoryInterface } from "./production.repository.intreface.js";
 import type {
   CreateProductionInput,
   CreatedProduction,
@@ -9,8 +10,7 @@ import type {
   CreatedProductionItem,
   OrderItemView,
   ProductionDetailView,
-  ProductionRepositoryInterface,
-} from "./production.repository.intreface.js";
+} from "../../types/production.js";
 
 export class ProductionRepositoryPg implements ProductionRepositoryInterface {
   async getAllProductions(): Promise<any[]> {
@@ -20,7 +20,8 @@ export class ProductionRepositoryPg implements ProductionRepositoryInterface {
         p.order_id AS "orderId",
         p.status,
         p.start_date AS "startDate",
-        p.expected_end_date AS "expectedEndDate",
+        p.expect_dificulty AS "expectDificulty",
+        p.expect_end_date AS "expectedEndDate",
         p.end_date AS "endDate"
       FROM production p
       ORDER BY p.id DESC
@@ -35,7 +36,8 @@ export class ProductionRepositoryPg implements ProductionRepositoryInterface {
     try {
       await client.query("BEGIN");
 
-      const production = await this.insertProduction(client, data.orderId);
+      const expectDificulty = await this.calculateExpectedDificulty(client, data);
+      const production = await this.insertProduction(client, data.orderId, expectDificulty);
       const productionItems = await this.insertProductionItems(client, production.id, data.items);
       const itemByVariationId = new Map(
         productionItems.map(item => [item.productVariationId, item])
@@ -134,24 +136,85 @@ export class ProductionRepositoryPg implements ProductionRepositoryInterface {
     }
   }
 
-  private async insertProduction(client: PoolClient, orderId: number) {
+  private async insertProduction(
+    client: PoolClient,
+    orderId: number,
+    expectDificulty: number
+  ) {
     const result = await client.query(`
       INSERT INTO production (
         order_id,
         status,
-        start_date
+        start_date,
+        expect_dificulty
       )
-      VALUES ($1, 'planejado', NOW())
+      VALUES ($1, 'planejado', NOW(), $2)
       RETURNING
         id,
         order_id AS "orderId",
         status,
         start_date AS "startDate",
-        expected_end_date AS "expectedEndDate",
+        expect_dificulty AS "expectDificulty",
+        expect_end_date AS "expectedEndDate",
         end_date AS "endDate"
-    `, [orderId]);
+    `, [orderId, expectDificulty]);
 
     return result.rows[0] as Omit<CreatedProduction, "items" | "batches">;
+  }
+
+  private async calculateExpectedDificulty(
+    client: PoolClient,
+    data: CreateProductionInput
+  ): Promise<number> {
+    const variationIds = [...new Set(
+      data.batches.flatMap(batch => batch.items.map(item => item.productVariationId))
+    )];
+    const processIds = [...new Set(data.batches.map(batch => batch.processId))];
+
+    const result = await client.query(`
+      SELECT
+        pv.id AS "productVariationId",
+        pp.process_id AS "processId",
+        pp.dificulty_level AS "dificultyLevel"
+      FROM product_variation pv
+      JOIN product_process pp ON pp.product_id = pv.product_id
+      WHERE pv.id = ANY($1::int[])
+        AND pp.process_id = ANY($2::int[])
+    `, [variationIds, processIds]);
+
+    const dificultyByVariationAndProcess = new Map<string, number | null>();
+
+    for (const row of result.rows) {
+      dificultyByVariationAndProcess.set(
+        this.getDificultyKey(row.productVariationId, row.processId),
+        row.dificultyLevel
+      );
+    }
+
+    const total = data.batches.reduce((productionTotal, batch) => {
+      const workerCount = new Set(batch.workers).size;
+
+      const batchTotal = batch.items.reduce((itemsTotal, item) => {
+        const key = this.getDificultyKey(item.productVariationId, batch.processId);
+        const dificultyLevel = dificultyByVariationAndProcess.get(key);
+
+        if (dificultyLevel == null) {
+          throw new Error(
+            `Dificuldade nao cadastrada para a variacao ${item.productVariationId} no processo ${batch.processId}.`
+          );
+        }
+
+        return itemsTotal + ((item.quantity * dificultyLevel) / workerCount);
+      }, 0);
+
+      return productionTotal + batchTotal;
+    }, 0);
+
+    return Math.ceil(total);
+  }
+
+  private getDificultyKey(productVariationId: number, processId: number) {
+    return `${productVariationId}:${processId}`;
   }
 
   private async insertProductionItems(
