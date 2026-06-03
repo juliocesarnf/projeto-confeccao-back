@@ -1,3 +1,3 @@
 export interface ReportRepositoryInterface {
-  getAll(): Promise<any[]>;
+  getAllReports(): Promise<any[]>;
 }

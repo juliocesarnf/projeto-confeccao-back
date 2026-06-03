@@ -6,7 +6,7 @@ const repositorPg = new OrderRepositoryPg;
 const service = new OrderService(repositorPg);
 
 export class OrderController {
-  async get(req: Request, res: Response) {
+  async getOrders(req: Request, res: Response) {
 
     const id = Number(req.params.id);
     const { type } = req.query;
@@ -26,7 +26,7 @@ export class OrderController {
 
     return res.json(data);
   }
-  async getItems(req: Request, res: Response) {
+  async getItemsByOrderId(req: Request, res: Response) {
     const pedidoId = Number(req.params.id);
 
     const items = await service.getItemsByOrderId(pedidoId);

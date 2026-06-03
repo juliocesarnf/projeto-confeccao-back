@@ -9,8 +9,9 @@ import type {
   CreatedProductionBatchWorker,
   CreatedProductionItem,
   OrderItemView,
+  ProductionBatchView,
   ProductionDetailView,
-} from "../../types/production.js";
+} from "../../types/ProductionTypes.js";
 
 export class ProductionRepositoryPg implements ProductionRepositoryInterface {
   async getAllProductions(): Promise<any[]> {
@@ -51,21 +52,21 @@ export class ProductionRepositoryPg implements ProductionRepositoryInterface {
             production_id,
             process_id,
             step_order,
-            status
+            completed
           )
-          VALUES ($1, $2, $3, 'planejado')
+          VALUES ($1, $2, $3, FALSE)
           RETURNING
             id,
             process_id AS "processId",
             step_order AS "stepOrder",
-            status
+            completed
         `, [production.id, batchInput.processId, batchInput.stepOrder]);
 
         const batch = batchResult.rows[0] as {
           id: number;
           processId: number;
           stepOrder: number;
-          status: string;
+          completed: boolean;
         };
 
         const batchItems: CreatedProductionBatchItem[] = [];
@@ -114,7 +115,7 @@ export class ProductionRepositoryPg implements ProductionRepositoryInterface {
           id: batch.id,
           processId: batch.processId,
           stepOrder: batch.stepOrder,
-          status: batch.status,
+          completed: batch.completed,
           items: batchItems,
           workers,
         });
@@ -314,7 +315,19 @@ export class ProductionRepositoryPg implements ProductionRepositoryInterface {
     }
   }
 
-  async getProductionById(id: number): Promise<ProductionDetailView | null> {
+  async updateBatchStatus(batchId: number, completed: boolean): Promise<void> {
+    const result = await db.query(`
+      UPDATE production_batch
+      SET completed = $2
+      WHERE id = $1
+    `, [batchId, completed]);
+
+    if ((result.rowCount ?? 0) === 0) {
+      throw new Error(`Lote ${batchId} não encontrado.`);
+    }
+  }
+
+  async getProductionByOrderId(id: number): Promise<ProductionDetailView | null> {
     const productionResult = await db.query(`
       SELECT
         p.id                      AS "productionId",
@@ -351,6 +364,67 @@ export class ProductionRepositoryPg implements ProductionRepositoryInterface {
       WHERE oi.order_id = $1
     `, [first.orderId]);
 
+    const batchesResult = await db.query(`
+      SELECT
+        pb.id                     AS "batchId",
+        pb.process_id             AS "processId",
+        proc.name                 AS "processName",
+        pb.step_order             AS "stepOrder",
+        pb.completed              AS "batchCompleted",
+        pb.start_date             AS "batchStartDate",
+        pb.end_date               AS "batchEndDate",
+        pi.order_item_id          AS "orderItemId",
+        w.id                      AS "workerId",
+        w.name                    AS "workerName",
+        pbw.role                  AS "workerRole",
+        pbw.start_date            AS "workerStartDate",
+        pbw.end_date              AS "workerEndDate",
+        pbw.produced_quantity     AS "workerProducedQuantity"
+      FROM production_batch pb
+      JOIN process proc ON proc.id = pb.process_id
+      JOIN production_batch_item pbi ON pbi.production_batch_id = pb.id
+      JOIN production_item pi ON pi.id = pbi.production_item_id
+      LEFT JOIN production_batch_worker pbw ON pbw.production_batch_id = pb.id
+      LEFT JOIN worker w ON w.id = pbw.worker_id
+      WHERE pb.production_id = $1
+        AND pi.order_item_id IS NOT NULL
+      ORDER BY pb.step_order ASC
+    `, [first.productionId]);
+
+    type BatchMap = Map<number, ProductionBatchView>;
+    const batchesByOrderItem = new Map<number, BatchMap>();
+
+    for (const row of batchesResult.rows) {
+      if (!batchesByOrderItem.has(row.orderItemId)) {
+        batchesByOrderItem.set(row.orderItemId, new Map());
+      }
+      const batchMap = batchesByOrderItem.get(row.orderItemId)!;
+
+      if (!batchMap.has(row.batchId)) {
+        batchMap.set(row.batchId, {
+          batchId:     row.batchId,
+          processId:   row.processId,
+          processName: row.processName,
+          stepOrder:   row.stepOrder,
+          completed:   row.batchCompleted,
+          startDate:   row.batchStartDate,
+          endDate:     row.batchEndDate,
+          workers:     [],
+        });
+      }
+
+      if (row.workerId != null) {
+        batchMap.get(row.batchId)!.workers.push({
+          workerId:         row.workerId,
+          workerName:       row.workerName,
+          role:             row.workerRole,
+          startDate:        row.workerStartDate,
+          endDate:          row.workerEndDate,
+          producedQuantity: row.workerProducedQuantity,
+        });
+      }
+    }
+
     const allItems: OrderItemView[] = itemsResult.rows.map(row => ({
       orderItemId:        row.orderItemId,
       productVariationId: row.productVariationId,
@@ -359,6 +433,7 @@ export class ProductionRepositoryPg implements ProductionRepositoryInterface {
       quantity:           row.quantity,
       fulfilledQuantity:  row.fulfilledQuantity,
       status:             row.itemStatus,
+      batches:            Array.from(batchesByOrderItem.get(row.orderItemId)?.values() ?? []),
     }));
 
     const fulfilled = allItems.filter(i => i.status === "atendido");

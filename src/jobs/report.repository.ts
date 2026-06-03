@@ -1,7 +1,7 @@
 import { db } from "../database/db.js";
-import type { CreateReportInput } from "../types/report.js";
+import type { CreateReportInput } from "../types/ReportsTypes.js";
 
-export type { CreateReportInput } from "../types/report.js";
+export type { CreateReportInput } from "../types/ReportsTypes.js";
 
 export class ReportRepository {
   async createIfMissing(input: CreateReportInput) {

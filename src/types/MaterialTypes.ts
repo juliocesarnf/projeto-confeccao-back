@@ -1,10 +1,11 @@
+export type MaterialVariation = {
+  id: number;
+  variation: string;
+  stock: number;
+};
+
 export type RequiredMaterialInput = {
   materialId: number;
-  variationId: number;
-  material: string;
-  variation: string;
-  quantity: number;
-  baseUnit: string;
 };
 
 export type MaterialSupplierInfo = {
@@ -25,11 +26,8 @@ export type PurchaseMaterialInput = {
 };
 
 export type MaterialVariationInfo = {
-  variation_id: number;
-  material: string;
-  variation: string;
+  materialVariationId: number;
   quantity: number;
-  base_unit: string;
 };
 
 export type LowMaterialStockOptions = {

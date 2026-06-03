@@ -2,7 +2,7 @@ import { db } from "../../database/db.js";
 import type { ReportRepositoryInterface } from "./report.repository.interface.js";
 
 export class ReportRepositoryPg implements ReportRepositoryInterface {
-  async getAll(): Promise<any[]> {
+  async getAllReports(): Promise<any[]> {
     const result = await db.query(`
       SELECT
         id,

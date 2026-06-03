@@ -1,21 +1,30 @@
-export type ProductToDo = {
-  productId: number;
+export type Product = {
+  id: number;
   name: string;
-  quantity: number;
-  processes?: ProductProcess[];
+  description?: string;
+  category?: string;
+  active: boolean;
 };
 
 export type ProductProcess = {
   id: number;
   name: string;
+  processId: number;
+  stepOrder: number;
+  dificultyLevel: number;
 };
 
-export interface ProductRepositoryInterface {
-  getMaterialsForProductVariationId(id: number): Promise<any[]>;
-  getAllVariations(): Promise<any[]>;
-  getMaterialsByVariationIdList(ids: number[]): Promise<any[]>;
-  getProcessesByProductIdList(products: ProductToDo[]): Promise<any[]>;
-}
+export type ProductProcessesResult = {
+  productId: number;
+  processes: ProductProcess[];
+};
+
+export type ProductVariation = {
+  id: number;
+  variation: string;
+  stock: number;
+  productId: number;
+};
 
 export type LowProductStockOptions = {
   lookbackDays: number;

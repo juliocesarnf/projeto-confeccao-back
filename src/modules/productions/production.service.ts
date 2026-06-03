@@ -3,7 +3,7 @@ import type {
   CreateProductionBatchInput,
   CreateProductionInput,
   CreateProductionItemInput,
-} from "../../types/production.js";
+} from "../../types/ProductionTypes.js";
 
 export class ProductionService {
   constructor(private readonly repository: ProductionRepositoryInterface) {}
@@ -125,12 +125,24 @@ export class ProductionService {
     return Number.isInteger(value) && Number(value) > 0;
   }
 
-  async getProductionById(id: number) {
+  async getProductionByOrderId(id: number) {
     if (!this.isPositiveInteger(id)) {
       throw new Error("id deve ser um número inteiro positivo.");
     }
 
-    return this.repository.getProductionById(id);
+    return this.repository.getProductionByOrderId(id);
+  }
+
+  async updateBatchStatus(batchId: number, completed: boolean) {
+    if (!this.isPositiveInteger(batchId)) {
+      throw new Error("batchId deve ser um número inteiro positivo.");
+    }
+
+    if (typeof completed !== "boolean") {
+      throw new Error("completed deve ser um booleano.");
+    }
+
+    await this.repository.updateBatchStatus(batchId, completed);
   }
 
   async fulfillItems(orderId: number, itemIds: number[]) {

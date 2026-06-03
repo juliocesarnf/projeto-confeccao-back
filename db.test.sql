@@ -175,8 +175,8 @@ SELECT
   'SKU-' || p.id || '-' || gs                                                        AS sku,
   (ARRAY['P','M','G','GG','EXG'])[floor(random() * 5)::int + 1]                     AS size,
   (ARRAY['Preto','Branco','Azul','Vermelho','Verde'])[floor(random() * 5)::int + 1]  AS color,
-  ROUND((20 + random() * 180)::numeric, 2)                                           AS stock,
-  ROUND((random() * 40 + 10)::numeric, 2)                                            AS minimum_stock,
+  (20 + floor(random() * 181))::int                                                  AS stock,
+  (10 + floor(random() * 41))::int                                                   AS minimum_stock,
   ROUND((random() * 200 + 50)::numeric, 2)                                           AS base_price,
   TRUE
 FROM product p

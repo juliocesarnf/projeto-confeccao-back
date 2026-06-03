@@ -1,22 +1,38 @@
 import type { Request, Response } from "express";
 import { ProductService } from "./product.service.js";
 import { ProductRepositoryPg } from "./product.repository.pg.js";
-import { MaterialService } from "../materials/material.service.js";
-import type { ProductToDo, ProductProcess } from "../../types/product.js";
-
-export type { ProductToDo, ProductProcess } from "../../types/product.js";
 
 const repositorPg = new ProductRepositoryPg()
 const service = new ProductService(repositorPg);
 
 export class ProductController {
-  async get(req: Request, res: Response) {
+  async getAllProducts(_req: Request, res: Response) {
+    const data = await service.getAllProducts();
+    return res.json(data);
+  }
+
+  async createProduct(req: Request, res: Response) {
+    const body = req.body as { name: string; description?: string; category?: string; active: boolean };
+    const data = await service.createProduct(body);
+    return res.status(201).json(data);
+  }
+
+  async getProductVariations(_req: Request, res: Response) {
     let data = await service.getAllVariations();
     return res.json(data);
   }
 
-  async getAllVariations(req: Request, res: Response) {
-    
+async updateVariation(req: Request, res: Response) {
+    const id = Number(req.params.id);
+    const { stock } = req.body as { variation: string; stock: number };
+    const data = await service.updateVariation(id, stock);
+    return res.json(data);
+  }
+
+  async getVariationsByProductId(req: Request, res: Response) {
+    const id = Number(req.params.id);
+    const data = await service.getVariationsByProductId(id);
+    return res.json(data);
   }
 
   async getMaterialsForProductVariationId(req: Request, res: Response) {
@@ -38,8 +54,8 @@ export class ProductController {
   }
 
   async getProcessesByProductIdList(req: Request, res: Response) {
-    const { products } = req.body as { products: ProductToDo[] };
-    const processes = await service.getProcessesByProductIdList(products);
+    const { productIds } = req.body as { productIds: number[] };
+    const processes = await service.getProcessesByProductIdList(productIds);
     return res.json(processes);
   }
 

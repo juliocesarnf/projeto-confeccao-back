@@ -1,6 +1,6 @@
 import { db } from "../database/db.js";
 import { ReportRepository } from "./report.repository.js";
-import type { LowProductStockOptions, LowProductStockRow } from "../types/product.js";
+import type { LowProductStockOptions, LowProductStockRow } from "../types/ProductTypes.js";
 
 const TYPE = "low_product_stock";
 const ENTITY_TYPE = "product_variation";

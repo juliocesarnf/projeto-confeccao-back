@@ -6,8 +6,8 @@ const repositoryPg = new ReportRepositoryPg();
 const service = new ReportService(repositoryPg);
 
 export class ReportController {
-  async get(req: Request, res: Response) {
-    const data = await service.getAll();
+  async getAllReports(req: Request, res: Response) {
+    const data = await service.getAllReports();
     return res.json(data);
   }
 }

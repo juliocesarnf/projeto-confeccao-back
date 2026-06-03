@@ -47,7 +47,7 @@ export type CreatedProductionBatch = {
   id: number;
   processId: number;
   stepOrder: number;
-  status: string;
+  completed: boolean;
   items: CreatedProductionBatchItem[];
   workers: CreatedProductionBatchWorker[];
 };
@@ -64,6 +64,26 @@ export type CreatedProduction = {
   batches: CreatedProductionBatch[];
 };
 
+export interface ProductionBatchWorkerView {
+  workerId: number;
+  workerName: string;
+  role: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  producedQuantity: number;
+}
+
+export interface ProductionBatchView {
+  batchId: number;
+  processId: number;
+  processName: string;
+  stepOrder: number | null;
+  completed: boolean;
+  startDate: string | null;
+  endDate: string | null;
+  workers: ProductionBatchWorkerView[];
+}
+
 export interface OrderItemView {
   orderItemId: number;
   productVariationId: number;
@@ -72,7 +92,25 @@ export interface OrderItemView {
   quantity: number;
   fulfilledQuantity: number;
   status: "pendente" | "parcial" | "atendido";
+  batches: ProductionBatchView[];
 }
+
+export type ProductionDelayRiskOptions = {
+  // Quantos minutos leva para processar 50 unidades numa etapa de produção
+  minutesPer50Units: number;
+};
+
+export type ProductionDelayRiskRow = {
+  production_id: number;
+  order_id: number;
+  due_date: string;
+  customer_name: string;
+  remaining_difficulty: number;
+  remaining_batches: number;
+  total_batches: number;
+  estimated_completion: string;
+  days_slack: string;
+};
 
 export interface ProductionDetailView {
   order: {
@@ -93,11 +131,4 @@ export interface ProductionDetailView {
     fulfilled: OrderItemView[];
     pending: OrderItemView[];
   };
-}
-
-export interface ProductionRepositoryInterface {
-  getAllProductions(): Promise<any[]>;
-  createProduction(data: CreateProductionInput): Promise<CreatedProduction>;
-  getProductionById(id: number): Promise<ProductionDetailView | null>;
-  fulfillItems(orderId: number, itemIds: number[]): Promise<void>;
 }

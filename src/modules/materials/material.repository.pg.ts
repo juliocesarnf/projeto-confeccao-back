@@ -1,12 +1,34 @@
 import { db } from "../../database/db.js";
 import type { MaterialRepositoryInterface } from "./material.repository.interface.js";
 import type {
+  MaterialVariation,
   PurchaseMaterialInput,
   RequiredMaterialInput,
   RequiredMaterialSuppliers,
-} from "../../types/material.js";
+} from "../../types/MaterialTypes.js";
 
 export class MaterialRepositoryPg implements MaterialRepositoryInterface {
+
+  async getAllMaterials(): Promise<any[]> {
+    const result = await db.query(`
+      SELECT id, name, base_unit AS "baseUnit", quantity_per_package AS "quantityPerPackage"
+      FROM material
+      ORDER BY name
+    `);
+    return result.rows;
+  }
+
+  async createMaterial(data: { name: string; baseUnit: string; quantityPerPackage?: number }): Promise<any> {
+    const result = await db.query(
+      `
+      INSERT INTO material (name, base_unit, quantity_per_package)
+      VALUES ($1, $2, $3)
+      RETURNING id, name, base_unit AS "baseUnit", quantity_per_package AS "quantityPerPackage"
+      `,
+      [data.name, data.baseUnit, data.quantityPerPackage ?? 1]
+    );
+    return result.rows[0];
+  }
 
   async getAllVariations(): Promise<any[]> {
     const result = await db.query(`
@@ -36,6 +58,43 @@ export class MaterialRepositoryPg implements MaterialRepositoryInterface {
         baseUnit: row.baseUnit
       }
     }));
+  }
+
+  async getVariationsByMaterialId(id: number): Promise<MaterialVariation[]> {
+    const result = await db.query(
+      `
+      SELECT id, variation, stock
+      FROM material_variation
+      WHERE material_id = $1
+      ORDER BY variation
+      `,
+      [id]
+    );
+
+    return result.rows.map(row => ({
+      id: row.id,
+      variation: row.variation,
+      stock: Number(row.stock),
+    }));
+  }
+
+  async updateVariation(id: number, variation: string, stock: number): Promise<MaterialVariation> {
+    const result = await db.query(
+      `
+      UPDATE material_variation
+      SET variation = $1, stock = $2
+      WHERE id = $3
+      RETURNING id, variation, stock
+      `,
+      [variation, stock, id]
+    );
+
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      variation: row.variation,
+      stock: Number(row.stock),
+    };
   }
 
   async decrementStockByVariationId(

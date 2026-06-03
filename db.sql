@@ -37,7 +37,7 @@ CREATE TABLE product_variation (
   sku VARCHAR(100),
   size VARCHAR(50),
   color VARCHAR(50),
-  stock NUMERIC(10,2) DEFAULT 0,
+  stock int DEFAULT 0,
   minimum_stock NUMERIC(10,2) DEFAULT 0,
   base_price NUMERIC(10,2),
   active BOOLEAN DEFAULT TRUE,
@@ -63,6 +63,7 @@ CREATE TABLE product_supplier (
 -- =========================
 CREATE TABLE customer_order (
   id SERIAL PRIMARY KEY,
+  ml_order_id BIGINT UNIQUE,
   customer_id INT NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   status VARCHAR(50) CHECK (
@@ -116,6 +117,19 @@ CREATE TABLE material_variation (
   stock NUMERIC(10,2) DEFAULT 0,
 
   FOREIGN KEY (material_id) REFERENCES material(id)
+);
+
+-- =========================
+-- MATERIAL SUPPLIERS
+-- =========================
+CREATE TABLE material_supplier (
+  id           SERIAL        PRIMARY KEY,
+  material_id  INT           NOT NULL REFERENCES material(id)  ON DELETE CASCADE,
+  supplier_id  INT           NOT NULL REFERENCES supplier(id)  ON DELETE CASCADE,
+  price        NUMERIC(10,2) NOT NULL CHECK (price >= 0),
+  created_at   TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at   TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (material_id, supplier_id)
 );
 
 -- =========================
@@ -220,7 +234,7 @@ CREATE TABLE production_batch (
 
   step_order INT,
 
-  status VARCHAR(50),
+  completed BOOLEAN DEFAULT FALSE,
 
   start_date TIMESTAMP,
   end_date TIMESTAMP,
@@ -285,6 +299,27 @@ CREATE TABLE report (
 
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   read_at TIMESTAMP
+);
+
+-- =========================
+-- INTEGRATION CONFIG
+-- =========================
+CREATE TABLE integration_config (
+  key        VARCHAR(100) PRIMARY KEY,
+  value      TEXT         NOT NULL,
+  updated_at TIMESTAMPTZ  DEFAULT NOW()
+);
+
+-- =========================
+-- ML SKU MAPPING
+-- =========================
+CREATE TABLE ml_sku_mapping (
+  id                   SERIAL PRIMARY KEY,
+  seller_sku           VARCHAR(100) NOT NULL,
+  product_variation_id INT NOT NULL REFERENCES product_variation(id),
+  quantity_per_unit    INT NOT NULL,
+  description          VARCHAR(255),
+  UNIQUE (seller_sku, product_variation_id)
 );
 
 -- =========================

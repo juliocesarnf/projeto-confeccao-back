@@ -1,6 +1,6 @@
 import { db } from "../database/db.js";
 import { ReportRepository } from "./report.repository.js";
-import type { LowMaterialStockOptions, LowMaterialStockRow } from "../types/material.js";
+import type { LowMaterialStockOptions, LowMaterialStockRow } from "../types/MaterialTypes.js";
 
 const TYPE = "low_material_stock";
 const ENTITY_TYPE = "material_variation";

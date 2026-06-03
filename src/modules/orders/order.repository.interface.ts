@@ -1,8 +1,10 @@
+import type { Order, OrderItem, ConfirmedOrder } from "../../types/OrderTypes.js";
+
 export interface OrderRepositoryInterface {
-  getDoneOrders(): Promise<any[]>;
-  getProgressOrders(): Promise<any[]>;
-  getNewOrders(): Promise<any[]>;
-  getAllOrders(): Promise<any[]>;
-  getItemsByOrderId(id: number): Promise<any[]>;
-  confirmOrder(id: number): Promise<any | null>; 
+  getDoneOrders(): Promise<Order[]>;
+  getProgressOrders(): Promise<Order[]>;
+  getNewOrders(): Promise<Order[]>;
+  getAllOrders(): Promise<Order[]>;
+  getItemsByOrderId(id: number): Promise<OrderItem[]>;
+  confirmOrder(id: number): Promise<ConfirmedOrder | null>;
 }

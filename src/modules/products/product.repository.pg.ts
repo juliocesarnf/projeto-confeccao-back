@@ -1,8 +1,41 @@
 import { db } from "../../database/db.js";
-import type { ProductToDo } from "../../types/product.js";
+import type { Product, ProductProcessesResult, ProductVariation } from "../../types/ProductTypes.js";
 import type { ProductRepositoryInterface } from "./product.repository.interface.js";
 
 export class ProductRepositoryPg implements ProductRepositoryInterface {
+
+  async getAllProducts(): Promise<Product[]> {
+    const result = await db.query(`
+      SELECT id, name, description, category, active
+      FROM product
+      ORDER BY name
+    `);
+    return result.rows;
+  }
+
+  async updateVariation(id: number, stock: number): Promise<ProductVariation> {
+    const result = await db.query(
+      `
+      UPDATE product_variation
+      SET stock = $1
+      WHERE id = $2
+      RETURNING
+        id,
+        product_id AS "productId",
+        stock,
+        COALESCE(NULLIF(TRIM(CONCAT_WS(' / ', size, color)), ''), sku, 'Padrão') AS variation
+      `,
+      [stock, id]
+    );
+
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      productId: row.productId,
+      variation: row.variation,
+      stock: Number(row.stock),
+    };
+  }
 
   async getMaterialsForProductVariationId(id: number): Promise<any[]> {
     const result = await db.query(
@@ -59,8 +92,44 @@ export class ProductRepositoryPg implements ProductRepositoryInterface {
     }));
   }
 
+  async createProduct(data: { name: string; description?: string; category?: string; active: boolean }): Promise<Product> {
+    const result = await db.query(
+      `
+      INSERT INTO product (name, description, category, active)
+      VALUES ($1, $2, $3, $4)
+      RETURNING id, name, description, category, active
+      `,
+      [data.name, data.description ?? null, data.category ?? null, data.active]
+    );
+
+    return result.rows[0];
+  }
+
   async getAllVariations(): Promise<any[]> {
     return [];
+  }
+
+  async getVariationsByProductId(id: number): Promise<ProductVariation[]> {
+    const result = await db.query(
+      `
+      SELECT
+        id,
+        product_id AS "productId",
+        COALESCE(NULLIF(TRIM(CONCAT_WS(' / ', size, color)), ''), sku, 'Padrão') AS variation,
+        stock
+      FROM product_variation
+      WHERE product_id = $1 AND active = TRUE
+      ORDER BY id
+      `,
+      [id]
+    );
+
+    return result.rows.map(row => ({
+      id: row.id,
+      productId: row.productId,
+      variation: row.variation,
+      stock: Number(row.stock),
+    }));
   }
 
   async getMaterialsByVariationIdList(ids: number[]): Promise<any[]> {
@@ -118,14 +187,9 @@ export class ProductRepositoryPg implements ProductRepositoryInterface {
     }));
   }
 
-  async getProcessesByProductIdList(products: ProductToDo[]): Promise<any[]> {
-    const productIds = products.map(product => product.productId);
-
+  async getProcessesByProductIdList(productIds: number[]): Promise<ProductProcessesResult[]> {
     if (productIds.length === 0) {
-      return products.map(product => ({
-        ...product,
-        processos: [],
-      }));
+      return [];
     }
 
     const result = await db.query(
@@ -159,7 +223,6 @@ export class ProductRepositoryPg implements ProductRepositoryInterface {
 
       acc[productId].push({
         id: row.id,
-        productId: row.productId,
         processId: row.processId,
         stepOrder: row.stepOrder,
         dificultyLevel: row.dificultyLevel,
@@ -169,9 +232,9 @@ export class ProductRepositoryPg implements ProductRepositoryInterface {
       return acc;
     }, {} as Record<number, any[]>);
 
-    return products.map(product => ({
-      ...product,
-      processes: processesByProductId[product.productId] ?? [],
+    return productIds.map(productId => ({
+      productId,
+      processes: processesByProductId[productId] ?? [],
     }));
   }
 

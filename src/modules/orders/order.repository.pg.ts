@@ -1,9 +1,10 @@
 import type { OrderRepositoryInterface } from "./order.repository.interface.js";
+import type { Order, OrderItem, ConfirmedOrder } from "../../types/OrderTypes.js";
 import { db } from "../../database/db.js";
 
 export class OrderRepositoryPg implements OrderRepositoryInterface {
 
-  async getDoneOrders(): Promise<any[]> {
+  async getDoneOrders(): Promise<Order[]> {
     const result = await db.query(`
       SELECT 
         co.id,
@@ -31,7 +32,7 @@ export class OrderRepositoryPg implements OrderRepositoryInterface {
     return result.rows;
   }
 
-  async getProgressOrders(): Promise<any[]> {
+  async getProgressOrders(): Promise<Order[]> {
     const result = await db.query(`
       SELECT 
         co.id,
@@ -59,7 +60,7 @@ export class OrderRepositoryPg implements OrderRepositoryInterface {
     return result.rows;
   }
 
-  async getNewOrders(): Promise<any[]> {
+  async getNewOrders(): Promise<Order[]> {
     const result = await db.query(`
       SELECT 
         co.id,
@@ -87,7 +88,7 @@ export class OrderRepositoryPg implements OrderRepositoryInterface {
     return result.rows;
   }
 
-  async getAllOrders(): Promise<any[]> {
+  async getAllOrders(): Promise<Order[]> {
     const result = await db.query(`
       SELECT 
         co.id,
@@ -113,7 +114,7 @@ export class OrderRepositoryPg implements OrderRepositoryInterface {
     return result.rows;
   }
 
-  async getItemsByOrderId(id: number): Promise<any[]> {
+  async getItemsByOrderId(id: number): Promise<OrderItem[]> {
     const result = await db.query(`
       SELECT 
         oi.id,
@@ -159,7 +160,7 @@ export class OrderRepositoryPg implements OrderRepositoryInterface {
     }));
   }
 
-  async confirmOrder(id: number): Promise<any | null> {
+  async confirmOrder(id: number): Promise<ConfirmedOrder | null> {
     const result = await db.query(`
       UPDATE customer_order
       SET status = 'confirmado'
