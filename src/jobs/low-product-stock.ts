@@ -56,7 +56,7 @@ export async function checkLowProductStock(options: LowProductStockOptions) {
     await createReport(row, options);
   }
 
-  await reportRepository.resolveRecovered(TYPE, ENTITY_TYPE, lowStockIds);
+  await reportRepository.deleteRecovered(TYPE, ENTITY_TYPE, lowStockIds);
 
   return result.rows;
 }
@@ -80,7 +80,7 @@ async function createReport(
     periodDays: options.lookbackDays,
   };
 
-  await reportRepository.createIfMissing({
+  await reportRepository.upsertReport({
     type: TYPE,
     title: "Estoque baixo de produto",
     message: `A variacao ${variationName} esta com ${formatNumber(row.stock)} em estoque. Recomendado: ${formatNumber(row.recommendedMinimum)}. Consumo semanal medio: ${formatNumber(row.weeklyUsage)}.`,

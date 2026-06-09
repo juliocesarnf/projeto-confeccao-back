@@ -19,8 +19,16 @@ export class ProductService {
     return this.repository.getVariationsByProductId(id);
   }
 
-  async updateVariation(id: number, stock: number) {
-    return this.repository.updateVariation(id, stock);
+  async updateVariation(id: number, data: { size: string | null; color: string | null; stock: number }) {
+    return this.repository.updateVariation(id, data);
+  }
+
+  async addStock(id: number) {
+    return this.repository.addStock(id);
+  }
+
+  async removeStock(id: number) {
+    return this.repository.removeStock(id);
   }
 
   async getMaterialsForProductVariationId(id: number) {

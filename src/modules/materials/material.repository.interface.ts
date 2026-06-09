@@ -5,6 +5,7 @@ import type {
   PurchaseMaterialInput,
 } from "../../types/MaterialTypes.js";
 
+
 export interface MaterialRepositoryInterface {
   getAllMaterials(): Promise<any[]>;
   createMaterial(data: { name: string; baseUnit: string; quantityPerPackage?: number }): Promise<any>;
@@ -14,4 +15,6 @@ export interface MaterialRepositoryInterface {
   decrementStockByVariationId(variationId: number, quantity: number): Promise<void>;
   getRequiredMaterialsSuppliers(materials: RequiredMaterialInput[]): Promise<RequiredMaterialSuppliers[]>;
   purchaseMaterials(items: PurchaseMaterialInput[]): Promise<void>;
+  addStockPack(id: number): Promise<MaterialVariation>;
+  removeStockPack(id: number): Promise<MaterialVariation>;
 }

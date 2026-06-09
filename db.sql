@@ -46,19 +46,6 @@ CREATE TABLE product_variation (
 );
 
 -- =========================
--- PRODUCT SUPPLIERS
--- =========================
-CREATE TABLE product_supplier (
-  id           SERIAL        PRIMARY KEY,
-  product_id   INT           NOT NULL REFERENCES product(id)   ON DELETE CASCADE,
-  supplier_id  INT           NOT NULL REFERENCES supplier(id)  ON DELETE CASCADE,
-  price        NUMERIC(10,2) NOT NULL CHECK (price >= 0),
-  created_at   TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at   TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE (product_id, supplier_id)
-);
-
--- =========================
 -- ORDER
 -- =========================
 CREATE TABLE customer_order (
@@ -186,8 +173,6 @@ CREATE TABLE production (
   status VARCHAR(50) CHECK (
     status IN (
       'planejado',
-      'aguardando_material',
-      'em_andamento',
       'pausado',
       'finalizado',
       'cancelado'

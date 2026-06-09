@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "tsx src/server.ts",
-    "dev:worker": "tsx src/worker.ts"
+    "dev": "tsx --env-file=.env src/server.ts",
+    "dev:worker": "tsx --env-file=.env src/worker.ts"
   },
   "type": "module",
   "keywords": [],

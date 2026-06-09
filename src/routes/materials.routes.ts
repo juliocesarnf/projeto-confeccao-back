@@ -12,5 +12,7 @@ MaterialRouter.put('/variacoes/:id', controller.updateVariation.bind(controller)
 MaterialRouter.post('/fornecedores', controller.getRequiredMaterialsSuppliers.bind(controller));
 MaterialRouter.post('/variacoes/remover-estoque', controller.removeStockVariations.bind(controller));
 MaterialRouter.post('/compra', controller.purchaseMaterials.bind(controller));
+MaterialRouter.patch('/variacoes/:id/adicionar-pacote', controller.addStockPack.bind(controller));
+MaterialRouter.patch('/variacoes/:id/remover-pacote', controller.removeStockPack.bind(controller));
 
 export default MaterialRouter;

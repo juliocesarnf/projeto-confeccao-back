@@ -13,28 +13,58 @@ export class ProductRepositoryPg implements ProductRepositoryInterface {
     return result.rows;
   }
 
-  async updateVariation(id: number, stock: number): Promise<ProductVariation> {
+  async updateVariation(id: number, data: { size: string | null; color: string | null; stock: number }): Promise<ProductVariation> {
     const result = await db.query(
       `
       UPDATE product_variation
-      SET stock = $1
-      WHERE id = $2
+      SET size = $1, color = $2, stock = $3
+      WHERE id = $4
       RETURNING
         id,
         product_id AS "productId",
-        stock,
-        COALESCE(NULLIF(TRIM(CONCAT_WS(' / ', size, color)), ''), sku, 'Padrão') AS variation
+        size,
+        color,
+        stock
       `,
-      [stock, id]
+      [data.size, data.color, data.stock, id]
     );
 
     const row = result.rows[0];
     return {
       id: row.id,
       productId: row.productId,
-      variation: row.variation,
+      size: row.size ?? null,
+      color: row.color ?? null,
       stock: Number(row.stock),
     };
+  }
+
+  async addStock(id: number): Promise<ProductVariation> {
+    const result = await db.query(
+      `
+      UPDATE product_variation
+      SET stock = stock + 1
+      WHERE id = $1
+      RETURNING id, product_id AS "productId", size, color, stock
+      `,
+      [id]
+    );
+    const row = result.rows[0];
+    return { id: row.id, productId: row.productId, size: row.size ?? null, color: row.color ?? null, stock: Number(row.stock) };
+  }
+
+  async removeStock(id: number): Promise<ProductVariation> {
+    const result = await db.query(
+      `
+      UPDATE product_variation
+      SET stock = GREATEST(stock - 1, 0)
+      WHERE id = $1
+      RETURNING id, product_id AS "productId", size, color, stock
+      `,
+      [id]
+    );
+    const row = result.rows[0];
+    return { id: row.id, productId: row.productId, size: row.size ?? null, color: row.color ?? null, stock: Number(row.stock) };
   }
 
   async getMaterialsForProductVariationId(id: number): Promise<any[]> {
@@ -115,7 +145,8 @@ export class ProductRepositoryPg implements ProductRepositoryInterface {
       SELECT
         id,
         product_id AS "productId",
-        COALESCE(NULLIF(TRIM(CONCAT_WS(' / ', size, color)), ''), sku, 'Padrão') AS variation,
+        size,
+        color,
         stock
       FROM product_variation
       WHERE product_id = $1 AND active = TRUE
@@ -127,7 +158,8 @@ export class ProductRepositoryPg implements ProductRepositoryInterface {
     return result.rows.map(row => ({
       id: row.id,
       productId: row.productId,
-      variation: row.variation,
+      size: row.size ?? null,
+      color: row.color ?? null,
       stock: Number(row.stock),
     }));
   }

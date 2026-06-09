@@ -146,20 +146,61 @@ async function importOrder(order: MlOrder): Promise<'imported' | 'skipped' | 'er
   try {
     await client.query('BEGIN');
 
-    const orderResult = await client.query<{ id: number }>(
-      `INSERT INTO customer_order (ml_order_id, customer_id, status, total_value, created_at)
-       VALUES ($1, $2, 'novo', $3, $4) RETURNING id`,
-      [order.id, customerId, order.total_amount, new Date(order.date_created)]
+    // Lock stock rows to avoid race conditions with concurrent imports
+    const variationIds = [...new Set(itemsToInsert.map(i => i.productVariationId))];
+    const stockResult = await client.query<{ id: number; stock: number }>(
+      `SELECT id, stock FROM product_variation WHERE id = ANY($1) FOR UPDATE`,
+      [variationIds]
+    );
+    const stockMap = new Map<number, number>(
+      stockResult.rows.map(r => [r.id, r.stock] as [number, number])
     );
 
-    const orderId = orderResult.rows[0].id;
+    type ResolvedItem = {
+      productVariationId: number;
+      quantity: number;
+      unitPrice: number;
+      fulfilledQuantity: number;
+      status: 'pendente' | 'parcial' | 'atendido';
+    };
 
+    const resolvedItems: ResolvedItem[] = [];
     for (const item of itemsToInsert) {
+      const available = stockMap.get(item.productVariationId) ?? 0;
+      const fulfill = Math.min(available, item.quantity);
+      const status: 'pendente' | 'parcial' | 'atendido' =
+        fulfill >= item.quantity ? 'atendido' :
+        fulfill > 0 ? 'parcial' : 'pendente';
+
+      resolvedItems.push({ ...item, fulfilledQuantity: fulfill, status });
+      stockMap.set(item.productVariationId, available - fulfill);
+    }
+
+    const enoughItems = resolvedItems.every(i => i.status === 'atendido');
+
+    const dueDate = calcDueDate(new Date(order.date_created));
+
+    const orderResult = await client.query<{ id: number }>(
+      `INSERT INTO customer_order (ml_order_id, customer_id, status, total_value, created_at, enough_items, due_date)
+       VALUES ($1, $2, 'novo', $3, $4, $5, $6) RETURNING id`,
+      [order.id, customerId, order.total_amount, new Date(order.date_created), enoughItems, dueDate]
+    );
+
+    const orderId = orderResult.rows[0]!.id;
+
+    for (const item of resolvedItems) {
       await client.query(
         `INSERT INTO order_item (order_id, product_variation_id, quantity, unit_price, fulfilled_quantity, status)
-         VALUES ($1, $2, $3, $4, 0, 'pendente')`,
-        [orderId, item.productVariationId, item.quantity, item.unitPrice]
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [orderId, item.productVariationId, item.quantity, item.unitPrice, item.fulfilledQuantity, item.status]
       );
+
+      if (item.fulfilledQuantity > 0) {
+        await client.query(
+          `UPDATE product_variation SET stock = stock - $1 WHERE id = $2`,
+          [item.fulfilledQuantity, item.productVariationId]
+        );
+      }
     }
 
     await client.query('COMMIT');
@@ -180,7 +221,7 @@ async function findOrCreateCustomer(buyer: MlBuyer): Promise<number> {
       'SELECT id FROM customer WHERE phone = $1 LIMIT 1',
       [phone]
     );
-    if (found.rows.length > 0) return found.rows[0].id;
+    if (found.rows.length > 0) return found.rows[0]!.id;
   }
 
   const name = [buyer.first_name, buyer.last_name].filter(Boolean).join(' ').trim() || buyer.nickname;
@@ -190,7 +231,7 @@ async function findOrCreateCustomer(buyer: MlBuyer): Promise<number> {
     [name, phone ?? null]
   );
 
-  return created.rows[0].id;
+  return created.rows[0]!.id;
 }
 
 function normalizePhone(areaCode: string | null | undefined, number: string | null | undefined): string | null {
@@ -205,7 +246,7 @@ async function getLastSyncAt(): Promise<Date> {
   );
 
   if (result.rows.length > 0) {
-    return new Date(result.rows[0].value);
+    return new Date(result.rows[0]!.value);
   }
 
   // Primeira execução: busca os últimos 30 dias
@@ -259,6 +300,14 @@ async function createImportErrorReport(order: MlOrder, reason: string): Promise<
       JSON.stringify({ mlOrderId: order.id, buyer: order.buyer.nickname, reason }),
     ]
   );
+}
+
+function calcDueDate(from: Date): Date {
+  const next = new Date(from);
+  next.setDate(next.getDate() + 1);
+  if (next.getDay() === 0) next.setDate(next.getDate() + 1); // domingo → segunda
+  next.setHours(0, 0, 0, 0);
+  return next;
 }
 
 function readNumberEnv(name: string, fallback: number): number {

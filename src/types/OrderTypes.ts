@@ -7,6 +7,7 @@ export type Order = {
   totalValue: string;
   dueDate: Date;
   enoughItems: boolean;
+  isFromMl: boolean;
   customerName: string;
   totalItems: string;
   totalQuantity: string;
@@ -41,4 +42,10 @@ export type ConfirmedOrder = {
   totalValue: string;
   dueDate: Date;
   enoughItems: boolean;
+};
+
+export type CreateOrderInput = {
+  customerId: number;
+  dueDate: string;
+  items?: { variationId: number; quantity: number }[];
 };

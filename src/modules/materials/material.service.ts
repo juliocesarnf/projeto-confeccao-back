@@ -39,4 +39,12 @@ export class MaterialService {
   async purchaseMaterials(items: PurchaseMaterialInput[]) {
     await this.repository.purchaseMaterials(items);
   }
+
+  async addStockPack(id: number) {
+    return this.repository.addStockPack(id);
+  }
+
+  async removeStockPack(id: number) {
+    return this.repository.removeStockPack(id);
+  }
 }

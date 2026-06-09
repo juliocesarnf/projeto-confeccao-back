@@ -100,6 +100,32 @@ export class MaterialController {
     }
   }
 
+  async addStockPack(req: Request, res: Response) {
+    try {
+      const id = Number(req.params.id);
+      if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({ error: "id inválido" });
+      }
+      const data = await service.addStockPack(id);
+      return res.json(data);
+    } catch (error) {
+      return res.status(500).json({ error: "Erro ao adicionar pacote ao estoque" });
+    }
+  }
+
+  async removeStockPack(req: Request, res: Response) {
+    try {
+      const id = Number(req.params.id);
+      if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({ error: "id inválido" });
+      }
+      const data = await service.removeStockPack(id);
+      return res.json(data);
+    } catch (error) {
+      return res.status(500).json({ error: "Erro ao remover pacote do estoque" });
+    }
+  }
+
   async getRequiredMaterialsSuppliers(req: Request, res: Response) {
     const payload = req.body;
 

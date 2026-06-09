@@ -38,7 +38,8 @@ export class ProductionRepositoryPg implements ProductionRepositoryInterface {
       await client.query("BEGIN");
 
       const expectDificulty = await this.calculateExpectedDificulty(client, data);
-      const production = await this.insertProduction(client, data.orderId, expectDificulty);
+      const expectEndDate = this.calculateExpectEndDate(expectDificulty);
+      const production = await this.insertProduction(client, data.orderId, expectDificulty, expectEndDate);
       const productionItems = await this.insertProductionItems(client, production.id, data.items);
       const itemByVariationId = new Map(
         productionItems.map(item => [item.productVariationId, item])
@@ -140,16 +141,18 @@ export class ProductionRepositoryPg implements ProductionRepositoryInterface {
   private async insertProduction(
     client: PoolClient,
     orderId: number,
-    expectDificulty: number
+    expectDificulty: number,
+    expectEndDate: Date
   ) {
     const result = await client.query(`
       INSERT INTO production (
         order_id,
         status,
         start_date,
-        expect_dificulty
+        expect_dificulty,
+        expect_end_date
       )
-      VALUES ($1, 'planejado', NOW(), $2)
+      VALUES ($1, 'planejado', NOW(), $2, $3)
       RETURNING
         id,
         order_id AS "orderId",
@@ -158,9 +161,21 @@ export class ProductionRepositoryPg implements ProductionRepositoryInterface {
         expect_dificulty AS "expectDificulty",
         expect_end_date AS "expectedEndDate",
         end_date AS "endDate"
-    `, [orderId, expectDificulty]);
+    `, [orderId, expectDificulty, expectEndDate]);
 
     return result.rows[0] as Omit<CreatedProduction, "items" | "batches">;
+  }
+
+  private calculateExpectEndDate(expectDificulty: number): Date {
+    const withMargin = Math.ceil(expectDificulty * 1.15);
+    const dailyCapacity = 1600;
+    const daysNeeded = Math.ceil(withMargin / dailyCapacity);
+
+    const endDate = new Date();
+    endDate.setHours(0, 0, 0, 0);
+    endDate.setDate(endDate.getDate() + 1 + daysNeeded);
+
+    return endDate;
   }
 
   private async calculateExpectedDificulty(

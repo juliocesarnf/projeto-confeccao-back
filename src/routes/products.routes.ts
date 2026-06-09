@@ -11,6 +11,8 @@ ProductRouter.post('/', controller.createProduct.bind(controller));
 
 ProductRouter.get('/variacao', controller.getProductVariations.bind(controller));
 ProductRouter.put('/variacoes/:id', controller.updateVariation.bind(controller));
+ProductRouter.patch('/variacoes/:id/adicionar', controller.addStock.bind(controller));
+ProductRouter.patch('/variacoes/:id/remover', controller.removeStock.bind(controller));
 
 ProductRouter.get('/variacao/:id/materiais', controller.getMaterialsForProductVariationId.bind(controller));
 

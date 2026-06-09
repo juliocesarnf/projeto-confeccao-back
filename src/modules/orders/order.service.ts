@@ -1,4 +1,5 @@
 import type { OrderRepositoryInterface } from "./order.repository.interface.js";
+import type { CreateOrderInput } from "../../types/OrderTypes.js";
 
 export class OrderService {
   constructor(private readonly repository: OrderRepositoryInterface) {}
@@ -25,5 +26,13 @@ export class OrderService {
 
   async confirmOrder(pedidoId: number) {
     return this.repository.confirmOrder(pedidoId);
+  }
+
+  async deliverOrder(pedidoId: number) {
+    return this.repository.deliverOrder(pedidoId);
+  }
+
+  async createOrder(data: CreateOrderInput) {
+    return this.repository.createOrder(data);
   }
 }

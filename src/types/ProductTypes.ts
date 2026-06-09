@@ -21,7 +21,8 @@ export type ProductProcessesResult = {
 
 export type ProductVariation = {
   id: number;
-  variation: string;
+  size: string | null;
+  color: string | null;
   stock: number;
   productId: number;
 };

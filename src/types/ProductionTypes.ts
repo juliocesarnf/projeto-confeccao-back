@@ -96,20 +96,30 @@ export interface OrderItemView {
 }
 
 export type ProductionDelayRiskOptions = {
-  // Quantos minutos leva para processar 50 unidades numa etapa de produção
   minutesPer50Units: number;
 };
 
-export type ProductionDelayRiskRow = {
+export type ProductionStaticRiskRow = {
+  production_id: number;
+  order_id: number;
+  due_date: string;
+  customer_name: string;
+  expect_end_date: string;
+  expect_dificulty: number;
+  days_over: number;
+};
+
+export type ProductionDynamicRiskRow = {
   production_id: number;
   order_id: number;
   due_date: string;
   customer_name: string;
   remaining_difficulty: number;
+  remaining_with_margin: number;
   remaining_batches: number;
   total_batches: number;
-  estimated_completion: string;
-  days_slack: string;
+  estimated_end_date: string;
+  days_over: number;
 };
 
 export interface ProductionDetailView {

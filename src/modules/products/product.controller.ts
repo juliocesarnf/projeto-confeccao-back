@@ -22,10 +22,22 @@ export class ProductController {
     return res.json(data);
   }
 
-async updateVariation(req: Request, res: Response) {
+  async updateVariation(req: Request, res: Response) {
     const id = Number(req.params.id);
-    const { stock } = req.body as { variation: string; stock: number };
-    const data = await service.updateVariation(id, stock);
+    const { size, color, stock } = req.body as { size: string | null; color: string | null; stock: number };
+    const data = await service.updateVariation(id, { size, color, stock });
+    return res.json(data);
+  }
+
+  async addStock(req: Request, res: Response) {
+    const id = Number(req.params.id);
+    const data = await service.addStock(id);
+    return res.json(data);
+  }
+
+  async removeStock(req: Request, res: Response) {
+    const id = Number(req.params.id);
+    const data = await service.removeStock(id);
     return res.json(data);
   }
 

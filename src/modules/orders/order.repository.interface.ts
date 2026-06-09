@@ -1,4 +1,4 @@
-import type { Order, OrderItem, ConfirmedOrder } from "../../types/OrderTypes.js";
+import type { Order, OrderItem, ConfirmedOrder, CreateOrderInput } from "../../types/OrderTypes.js";
 
 export interface OrderRepositoryInterface {
   getDoneOrders(): Promise<Order[]>;
@@ -7,4 +7,6 @@ export interface OrderRepositoryInterface {
   getAllOrders(): Promise<Order[]>;
   getItemsByOrderId(id: number): Promise<OrderItem[]>;
   confirmOrder(id: number): Promise<ConfirmedOrder | null>;
+  deliverOrder(id: number): Promise<ConfirmedOrder | null>;
+  createOrder(data: CreateOrderInput): Promise<ConfirmedOrder>;
 }

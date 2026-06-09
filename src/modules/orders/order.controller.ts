@@ -8,7 +8,6 @@ const service = new OrderService(repositorPg);
 export class OrderController {
   async getOrders(req: Request, res: Response) {
 
-    const id = Number(req.params.id);
     const { type } = req.query;
 
     let data;
@@ -34,6 +33,22 @@ export class OrderController {
     return res.json(items);
   }
 
+  async deliverOrder(req: Request, res: Response) {
+    const pedidoId = Number(req.params.id);
+
+    if (!Number.isInteger(pedidoId) || pedidoId <= 0) {
+      return res.status(400).json({ error: "id do pedido invalido" });
+    }
+
+    const order = await service.deliverOrder(pedidoId);
+
+    if (!order) {
+      return res.status(404).json({ error: "Pedido nao encontrado" });
+    }
+
+    return res.json({ message: "Pedido entregue com sucesso.", order });
+  }
+
   async confirmOrder(req: Request, res: Response) {
     const pedidoId = Number(req.params.id);
 
@@ -48,5 +63,17 @@ export class OrderController {
     }
 
     return res.json(order);
+  }
+
+  async createOrder(req: Request, res: Response) {
+    const { customerId, dueDate, items } = req.body;
+
+    if (!customerId || !dueDate) {
+      return res.status(400).json({ error: "customerId e dueDate sao obrigatorios" });
+    }
+
+    const order = await service.createOrder({ customerId, dueDate, items });
+
+    return res.status(201).json(order);
   }
 }

@@ -159,6 +159,32 @@ export class MaterialRepositoryPg implements MaterialRepositoryInterface {
     return Object.values(suppliersByMaterialId);
   }
 
+  async addStockPack(id: number): Promise<MaterialVariation> {
+    const result = await db.query(
+      `UPDATE material_variation mv
+       SET stock = stock + m.quantity_per_package
+       FROM material m
+       WHERE mv.material_id = m.id AND mv.id = $1
+       RETURNING mv.id, mv.variation, mv.stock`,
+      [id]
+    );
+    const row = result.rows[0];
+    return { id: row.id, variation: row.variation, stock: Number(row.stock) };
+  }
+
+  async removeStockPack(id: number): Promise<MaterialVariation> {
+    const result = await db.query(
+      `UPDATE material_variation mv
+       SET stock = stock - m.quantity_per_package
+       FROM material m
+       WHERE mv.material_id = m.id AND mv.id = $1
+       RETURNING mv.id, mv.variation, mv.stock`,
+      [id]
+    );
+    const row = result.rows[0];
+    return { id: row.id, variation: row.variation, stock: Number(row.stock) };
+  }
+
   async purchaseMaterials(items: PurchaseMaterialInput[]): Promise<void> {
     if (items.length === 0) return;
 
