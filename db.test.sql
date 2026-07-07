@@ -161,22 +161,45 @@ END $$;
 
 
 -- ----------------------------------------------------------
--- 2.3 Variações de produtos (6–10 por produto)
+-- 2.3 Variações de produtos (6–10 por produto, size+color únicos)
 -- ----------------------------------------------------------
-INSERT INTO product_variation (
-  product_id, sku, size, color, stock, minimum_stock, base_price, active
-)
-SELECT
-  p.id,
-  'SKU-' || p.id || '-' || gs                                                        AS sku,
-  (ARRAY['P','M','G','GG','EXG'])[floor(random() * 5)::int + 1]                     AS size,
-  (ARRAY['Preto','Branco','Azul','Vermelho','Verde'])[floor(random() * 5)::int + 1]  AS color,
-  (20 + floor(random() * 181))::int                                                  AS stock,
-  (10 + floor(random() * 41))::int                                                   AS minimum_stock,
-  ROUND((random() * 200 + 50)::numeric, 2)                                           AS base_price,
-  TRUE
-FROM product p
-CROSS JOIN LATERAL generate_series(1, (floor(random() * 5) + 6)::int) gs;
+DO $$
+DECLARE
+  p             RECORD;
+  qtd_variacoes INT;
+  combo         RECORD;
+  gs            INT;
+BEGIN
+  FOR p IN SELECT id FROM product LOOP
+
+    qtd_variacoes := (FLOOR(random() * 5) + 6)::INT; -- 6 a 10
+    gs := 0;
+
+    FOR combo IN
+      SELECT s.size, c.color
+      FROM (VALUES ('P'),('M'),('G'),('GG'),('EXG')) AS s(size)
+      CROSS JOIN (VALUES ('Preto'),('Branco'),('Azul'),('Vermelho'),('Verde')) AS c(color)
+      ORDER BY random()
+      LIMIT qtd_variacoes
+    LOOP
+      gs := gs + 1;
+
+      INSERT INTO product_variation (
+        product_id, sku, size, color, stock, minimum_stock, base_price, active
+      ) VALUES (
+        p.id,
+        'SKU-' || p.id || '-' || gs,
+        combo.size,
+        combo.color,
+        (20 + floor(random() * 181))::int,
+        (10 + floor(random() * 41))::int,
+        ROUND((random() * 200 + 50)::numeric, 2),
+        TRUE
+      );
+    END LOOP;
+
+  END LOOP;
+END $$;
 
 
 -- ----------------------------------------------------------
