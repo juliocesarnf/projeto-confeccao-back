@@ -133,11 +133,7 @@ DECLARE
 BEGIN
   FOR m IN SELECT id FROM material LOOP
 
-    num_sups := CASE
-      WHEN random() < 0.40 THEN 1
-      WHEN random() < 0.75 THEN 2
-      ELSE                      3
-    END;
+    num_sups := (FLOOR(random() * 3) + 2)::INT; -- 2 a 4
 
     chosen := ARRAY[]::int[];
 
@@ -184,20 +180,56 @@ CROSS JOIN LATERAL generate_series(1, (floor(random() * 5) + 6)::int) gs;
 
 
 -- ----------------------------------------------------------
--- 2.4 Bill of Materials — materiais por variação de produto
+-- 2.4 Bill of Materials — 3 a 6 materiais aleatórios por PRODUTO
+--     (o mesmo conjunto de materiais se aplica a todas as
+--      variações daquele produto)
 -- ----------------------------------------------------------
-INSERT INTO product_material (product_variation_id, material_variation_id, quantity)
-SELECT
-  vp.id,
-  mv.id,
-  ROUND((random() * 4.9 + 0.1)::numeric, 3)
-FROM product_variation vp
-CROSS JOIN LATERAL (
-  SELECT id
-  FROM material_variation
-  ORDER BY random()
-  LIMIT (floor(random() * 5) + 3)::int
-) mv;
+DO $$
+DECLARE
+  p             RECORD;
+  qtd_materiais INT;
+  chosen_mats   INT[];
+  mat_id        INT;
+  vp            RECORD;
+  mv_id         INT;
+  i             INT;
+BEGIN
+  FOR p IN SELECT id FROM product LOOP
+
+    qtd_materiais := (FLOOR(random() * 4) + 3)::INT; -- 3 a 6
+    chosen_mats   := ARRAY[]::INT[];
+
+    FOR i IN 1..qtd_materiais LOOP
+      SELECT m.id INTO mat_id
+      FROM material m
+      WHERE m.id <> ALL(chosen_mats)
+      ORDER BY random()
+      LIMIT 1;
+
+      EXIT WHEN mat_id IS NULL;
+
+      chosen_mats := array_append(chosen_mats, mat_id);
+    END LOOP;
+
+    FOR vp IN SELECT id FROM product_variation WHERE product_id = p.id LOOP
+      FOREACH mat_id IN ARRAY chosen_mats LOOP
+
+        SELECT mv.id INTO mv_id
+        FROM material_variation mv
+        WHERE mv.material_id = mat_id
+        ORDER BY random()
+        LIMIT 1;
+
+        IF mv_id IS NOT NULL THEN
+          INSERT INTO product_material (product_variation_id, material_variation_id, quantity)
+          VALUES (vp.id, mv_id, ROUND((random() * 4.9 + 0.1)::numeric, 3));
+        END IF;
+
+      END LOOP;
+    END LOOP;
+
+  END LOOP;
+END $$;
 
 
 -- ============================================================
