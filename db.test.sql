@@ -322,8 +322,8 @@ BEGIN
 
     cust_id := ((order_index - 1) % 9) + 1;
 
-    venc := order_dates[order_index]::DATE
-              + ((floor(random() * 34) + 7)::INT * INTERVAL '1 day');
+    venc := CURRENT_DATE
+              + (floor(random() * 21)::INT * INTERVAL '1 day');
 
     INSERT INTO customer_order (
       customer_id, created_at, status, total_value, due_date, enough_items
