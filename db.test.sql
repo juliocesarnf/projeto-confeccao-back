@@ -255,6 +255,18 @@ BEGIN
 END $$;
 
 
+-- ----------------------------------------------------------
+-- 2.5 Mapeamento de SKU do Mercado Livre
+--     (evita erro de import no ML order sync ao reiniciar o worker)
+-- ----------------------------------------------------------
+INSERT INTO ml_sku_mapping (seller_sku, product_variation_id, quantity_per_unit)
+SELECT 'ML-TAN-BOR-PRE/VER-2', id, 1
+FROM product_variation
+ORDER BY id
+LIMIT 1
+ON CONFLICT (seller_sku, product_variation_id) DO NOTHING;
+
+
 -- ============================================================
 -- 3. PEDIDOS DE CLIENTES
 -- ============================================================
